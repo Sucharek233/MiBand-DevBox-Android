@@ -1,0 +1,276 @@
+package com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun QjsShellScreen(
+    viewModel: QjsShellViewModel,
+    modifier: Modifier = Modifier
+) {
+    var codeInput by remember { mutableStateOf("") }
+    val entries by viewModel.entries.collectAsState()
+
+    val listState = rememberLazyListState()
+    val focusRequester = remember { FocusRequester() }
+    val interactionSource = remember { MutableInteractionSource() }
+
+    LaunchedEffect(entries.size, codeInput) {
+        val totalItems = entries.size + 1
+        if (totalItems > 0) {
+            listState.animateScrollToItem(totalItems - 1)
+        }
+    }
+
+    val onSend = {
+        if (codeInput.isNotBlank()) {
+            val code = codeInput
+            codeInput = ""
+            viewModel.evaluateJsCode(code)
+        }
+    }
+
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("VelaJS DevTools") }) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0), // Prevents double-inset bottom gap bug
+        modifier = modifier
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
+                .background(DevToolsBg)
+                .imePadding() // Smoothly shifts content without creating a gap
+        ) {
+            // Main Console View Area
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null
+                    ) {
+                        focusRequester.requestFocus()
+                    }
+            ) {
+                SelectionContainer {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        // 1. Log & Result Entries
+                        items(entries) { entry ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .then(
+                                        if (entry is ConsoleEntry.Error) {
+                                            Modifier.background(DevToolsErrorBg)
+                                        } else Modifier
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                when (entry) {
+                                    is ConsoleEntry.Input -> {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = "> ",
+                                                color = DevToolsPromptBlue,
+                                                fontSize = 12.sp,
+                                                fontFamily = FontFamily.Monospace
+                                            )
+                                            Text(
+                                                text = entry.code,
+                                                color = Color.White,
+                                                fontSize = 12.sp,
+                                                fontFamily = FontFamily.Monospace
+                                            )
+                                        }
+                                    }
+
+                                    is ConsoleEntry.Output -> {
+                                        Row(verticalAlignment = Alignment.Top) {
+                                            Text(
+                                                text = "‹ ",
+                                                color = DevToolsDimArrow,
+                                                fontSize = 12.sp,
+                                                fontFamily = FontFamily.Monospace,
+                                                modifier = Modifier.padding(end = 2.dp)
+                                            )
+                                            Box(modifier = Modifier.weight(1f)) {
+                                                JsonTreeItem(value = entry.rawResult)
+                                            }
+                                        }
+                                    }
+
+                                    is ConsoleEntry.Error -> {
+                                        Row(verticalAlignment = Alignment.Top) {
+                                            Text(
+                                                text = "⊗ ",
+                                                color = DevToolsErrorText,
+                                                fontSize = 12.sp,
+                                                fontFamily = FontFamily.Monospace,
+                                                modifier = Modifier.padding(end = 4.dp)
+                                            )
+                                            Column {
+                                                Text(
+                                                    text = entry.message,
+                                                    color = DevToolsErrorText,
+                                                    fontSize = 12.sp,
+                                                    fontFamily = FontFamily.Monospace
+                                                )
+                                                if (entry.stack != null) {
+                                                    Text(
+                                                        text = entry.stack,
+                                                        color = DevToolsErrorText.copy(alpha = 0.7f),
+                                                        fontSize = 10.sp,
+                                                        fontFamily = FontFamily.Monospace
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            HorizontalDivider(color = DevToolsLineDivider, thickness = 0.5.dp)
+                        }
+
+                        // 2. Interactive Input Prompt
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Text(
+                                    text = "> ",
+                                    color = DevToolsPromptBlue,
+                                    fontSize = 12.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    lineHeight = 16.sp
+                                )
+
+                                BasicTextField(
+                                    value = codeInput,
+                                    onValueChange = { codeInput = it },
+                                    textStyle = TextStyle(
+                                        color = Color.White,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 12.sp,
+                                        lineHeight = 16.sp
+                                    ),
+                                    cursorBrush = SolidColor(DevToolsPromptBlue),
+                                    singleLine = false,
+                                    maxLines = 8,
+                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
+//                                    keyboardActions = KeyboardActions(onDefault = { onSend() }),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .focusRequester(focusRequester)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Quick Toolbar docked directly above keyboard
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF1E1E1E))
+                    .navigationBarsPadding() // Respects navigation bar when keyboard is closed
+            ) {
+                HorizontalDivider(color = DevToolsLineDivider, thickness = 1.dp)
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        DevToolsKeyButton("▲") {
+                            viewModel.getPreviousCommand()?.let { codeInput = it }
+                        }
+                        DevToolsKeyButton("▼") {
+                            viewModel.getNextCommand()?.let { codeInput = it }
+                        }
+                        DevToolsKeyButton("TAB") {
+                            codeInput += "  "
+                        }
+                        DevToolsKeyButton("CLR") {
+                            viewModel.clearConsole()
+                        }
+                    }
+
+                    Button(
+                        onClick = onSend,
+                        colors = ButtonDefaults.buttonColors(containerColor = DevToolsPromptBlue),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        modifier = Modifier.height(30.dp)
+                    ) {
+                        Text(
+                            text = "EVAL ↵",
+                            color = Color.Black,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DevToolsKeyButton(
+    text: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        color = Color(0xFF333333),
+        shape = MaterialTheme.shapes.extraSmall,
+        modifier = Modifier.height(30.dp)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.padding(horizontal = 10.dp)
+        ) {
+            Text(
+                text = text,
+                color = Color.White,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 11.sp
+            )
+        }
+    }
+}
