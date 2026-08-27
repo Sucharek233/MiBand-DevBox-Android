@@ -12,7 +12,7 @@ enum class CompatStatus {
 data class ModuleItem(
     val name: String,
     val isSelected: Boolean = true,
-    val isExpanded: Boolean = true,
+    val isExpanded: Boolean = false,
     val status: CompatStatus = CompatStatus.UNKNOWN,
     val functionsResult: Any? = null,
     val isLoadingFuncs: Boolean = false

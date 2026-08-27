@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -34,6 +35,14 @@ fun ModuleCompatibilityScreen(
 ) {
     val modules by viewModel.modules.collectAsState()
     var customInput by remember { mutableStateOf("") }
+    
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(Unit) {
+        viewModel.scrollToModule.collect { index ->
+            listState.animateScrollToItem(index)
+        }
+    }
 
     Scaffold(
         modifier = modifier
@@ -80,7 +89,10 @@ fun ModuleCompatibilityScreen(
 
             // Scrollable Module List
             SelectionContainer(modifier = Modifier.weight(1f)) {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize()
+                ) {
                     items(modules) { item ->
                         ModuleCardRow(
                             item = item,
@@ -229,7 +241,7 @@ private fun ModuleCardRow(
             // Inspect Functions Action
             IconButton(
                 onClick = onToggleExpand,
-                enabled = !isUnsupported
+                enabled = isSupported
             ) {
                 if (item.isLoadingFuncs) {
                     CircularProgressIndicator(
@@ -242,9 +254,9 @@ private fun ModuleCardRow(
                         imageVector = Icons.AutoMirrored.Filled.List,
                         contentDescription = "Inspect Functions",
                         tint = when {
-                            isUnsupported -> Color.Gray.copy(alpha = 0.2f)
+                            !isSupported -> Color.Gray.copy(alpha = 0.38f)
                             item.functionsResult != null -> DevToolsPromptBlue
-                            else -> Color.Gray
+                            else -> Color.White
                         },
                         modifier = Modifier.size(18.dp)
                     )

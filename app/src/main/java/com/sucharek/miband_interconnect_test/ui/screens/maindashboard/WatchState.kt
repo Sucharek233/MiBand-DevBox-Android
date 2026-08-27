@@ -1,5 +1,14 @@
 package com.sucharek.miband_interconnect_test.ui.screens.maindashboard
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Sensors
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.ui.graphics.vector.ImageVector
+
 sealed interface WatchConnectionState {
     object Disconnected : WatchConnectionState
     data class Connected(val nodeName: String) : WatchConnectionState
@@ -14,17 +23,18 @@ enum class ServiceType(val title: String) {
 enum class DashboardCategory(
     val title: String, 
     val description: String, 
-    val serviceType: ServiceType
+    val serviceType: ServiceType,
+    val icon: ImageVector
 ) {
     // Lua Service
-    PING("Ping", "Test connection latency", ServiceType.LUA),
-    TERMINAL("Terminal", "Send custom commands", ServiceType.LUA),
-    LUASHELL("Lua Shell", "Run custom Lua code", ServiceType.LUA),
-    FILES("File Explorer", "Explore the filesystem", ServiceType.LUA),
-    LUASENSORS("Lua Sensors", "Stream sensor data (Lua)", ServiceType.LUA),
+    PING("Ping", "Test connection latency", ServiceType.LUA, Icons.Default.Speed),
+    TERMINAL("Terminal", "Send custom commands", ServiceType.LUA, Icons.Default.Terminal),
+    LUASHELL("Lua Shell", "Run custom Lua code", ServiceType.LUA, Icons.Default.Code),
+    FILES("File Explorer", "Explore the filesystem", ServiceType.LUA, Icons.Default.Folder),
+    LUASENSORS("Lua Sensors", "Stream sensor data (Lua)", ServiceType.LUA, Icons.Default.Sensors),
     
     // QuickJS Service
-    QJS("VelaJS Shell", "Run custom Javascript code", ServiceType.QUICKJS),
-    MODULES("Modules", "Check module compatibility", ServiceType.QUICKJS),
-    SENSORS("Sensors", "Stream sensor data", ServiceType.QUICKJS)
+    QJS("VelaJS Shell", "Run custom Javascript code", ServiceType.QUICKJS, Icons.Default.Code),
+    MODULES("Modules", "Check module compatibility", ServiceType.QUICKJS, Icons.Default.Extension),
+    SENSORS("Sensors", "Stream sensor data", ServiceType.QUICKJS, Icons.Default.Sensors)
 }

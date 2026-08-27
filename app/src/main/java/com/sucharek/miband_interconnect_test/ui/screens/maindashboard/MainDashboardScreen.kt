@@ -28,7 +28,6 @@ fun MainDashboardScreen(
     val context = LocalContext.current
     val connectionState by viewModel.connectionState.collectAsState()
     val isAppInstalled by viewModel.isWatchAppInstalled.collectAsState()
-    val isLuaActive by viewModel.luaServiceActive.collectAsState()
 
     var selectedService by rememberSaveable { mutableStateOf(ServiceType.QUICKJS) }
 
@@ -163,7 +162,6 @@ fun MainDashboardScreen(
                 items(categories) { category ->
                     DashboardCategoryCard(
                         category = category,
-                        isLuaActive = isLuaActive,
                         onNavigate = onNavigateToCategory
                     )
                 }
@@ -175,7 +173,6 @@ fun MainDashboardScreen(
 @Composable
 private fun DashboardCategoryCard(
     category: DashboardCategory,
-    isLuaActive: Boolean,
     onNavigate: (Screen) -> Unit
 ) {
     Card(
@@ -194,9 +191,9 @@ private fun DashboardCategoryCard(
                 }
             },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
@@ -204,10 +201,17 @@ private fun DashboardCategoryCard(
                 .padding(16.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = category.icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = category.title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f)
                 )
             }

@@ -3,8 +3,11 @@ package com.sucharek.miband_interconnect_test.ui.screens.activities.moduleCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sucharek.miband_interconnect_test.ui.screens.maindashboard.WatchViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -88,6 +91,9 @@ class ModuleCompatibilityViewModel(
     )
     val modules: StateFlow<List<ModuleItem>> = _modules.asStateFlow()
 
+    private val _scrollToModule = MutableSharedFlow<Int>(extraBufferCapacity = 1)
+    val scrollToModule: SharedFlow<Int> = _scrollToModule.asSharedFlow()
+
     private var pendingFuncsModule: String? = null
 
     init {
@@ -155,9 +161,21 @@ class ModuleCompatibilityViewModel(
 
     fun addCustomModule(moduleName: String) {
         val trimmed = moduleName.trim()
-        if (trimmed.isBlank() || _modules.value.any { it.name == trimmed }) return
+        val existingIndex = _modules.value.indexOfFirst { it.name == trimmed }
+        
+        if (existingIndex != -1) {
+            viewModelScope.launch { _scrollToModule.emit(existingIndex) }
+            return
+        }
 
-        _modules.value = _modules.value + ModuleItem(name = trimmed, isSelected = true)
+        val newItem = ModuleItem(name = trimmed, isSelected = true)
+        _modules.value = _modules.value + newItem
+        val newIndex = _modules.value.size - 1
+        
+        viewModelScope.launch {
+            _scrollToModule.emit(newIndex)
+        }
+        
         testSingleCompat(trimmed)
     }
 
