@@ -19,27 +19,43 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.hossain.highlight.ui.ExperimentalHighlightApi
+import dev.hossain.highlight.ui.SyntaxHighlightedCode
+import dev.hossain.highlight.ui.rememberHighlightEngine
+import dev.hossain.highlight.ui.rememberHighlightedCode
+import dev.hossain.highlight.ui.rememberSyntaxHighlightedEditorValue
+import dev.hossain.highlight.ui.LocalHighlightTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalHighlightApi::class)
 @Composable
 fun QjsShellScreen(
     viewModel: QjsShellViewModel,
     modifier: Modifier = Modifier
 ) {
-    var codeInput by remember { mutableStateOf("") }
+    var codeInput by remember { mutableStateOf(TextFieldValue("")) }
     val entries by viewModel.entries.collectAsState()
+    
+    val theme = LocalHighlightTheme.current
+    
+    val displayValue = rememberSyntaxHighlightedEditorValue(
+        value = codeInput,
+        language = "javascript",
+        theme = theme
+    )
 
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
     val interactionSource = remember { MutableInteractionSource() }
 
-    LaunchedEffect(entries.size, codeInput) {
+    LaunchedEffect(entries.size, codeInput.text) {
         val totalItems = entries.size + 1
         if (totalItems > 0) {
             listState.animateScrollToItem(totalItems - 1)
@@ -47,9 +63,9 @@ fun QjsShellScreen(
     }
 
     val onSend = {
-        if (codeInput.isNotBlank()) {
-            val code = codeInput
-            codeInput = ""
+        if (codeInput.text.isNotBlank()) {
+            val code = codeInput.text
+            codeInput = TextFieldValue("")
             viewModel.evaluateJsCode(code)
         }
     }
@@ -114,13 +130,13 @@ fun QjsShellScreen(
                                                 text = "> ",
                                                 color = DevToolsPromptBlue,
                                                 fontSize = 12.sp,
-                                                fontFamily = FontFamily.Monospace
+                                                fontFamily = FontFamily.Monospace,
+                                                modifier = Modifier.padding(top = 4.dp)
                                             )
-                                            Text(
-                                                text = entry.code,
-                                                color = Color.White,
-                                                fontSize = 12.sp,
-                                                fontFamily = FontFamily.Monospace
+                                            PureSyntaxHighlightedCode(
+                                                code = entry.code,
+                                                language = "javascript",
+                                                modifier = Modifier.weight(1f)
                                             )
                                         }
                                     }
@@ -204,7 +220,7 @@ fun QjsShellScreen(
                                 )
 
                                 BasicTextField(
-                                    value = codeInput,
+                                    value = displayValue,
                                     onValueChange = { codeInput = it },
                                     textStyle = TextStyle(
                                         color = Color.White,
@@ -216,7 +232,6 @@ fun QjsShellScreen(
                                     singleLine = false,
                                     maxLines = 8,
                                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
-//                                    keyboardActions = KeyboardActions(onDefault = { onSend() }),
                                     modifier = Modifier
                                         .weight(1f)
                                         .focusRequester(focusRequester)
@@ -245,10 +260,14 @@ fun QjsShellScreen(
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         DevToolsKeyButton("▲") {
-                            viewModel.getPreviousCommand()?.let { codeInput = it }
+                            viewModel.getPreviousCommand()?.let { 
+                                codeInput = TextFieldValue(it, selection = androidx.compose.ui.text.TextRange(it.length))
+                            }
                         }
                         DevToolsKeyButton("▼") {
-                            viewModel.getNextCommand()?.let { codeInput = it }
+                            viewModel.getNextCommand()?.let { 
+                                codeInput = TextFieldValue(it, selection = androidx.compose.ui.text.TextRange(it.length))
+                            }
                         }
                         DevToolsKeyButton("CLR") {
                             viewModel.clearConsole()
@@ -272,6 +291,27 @@ fun QjsShellScreen(
             }
         }
     }
+}
+
+@Composable
+private fun PureSyntaxHighlightedCode(
+    code: String,
+    language: String,
+    modifier: Modifier = Modifier
+) {
+    val theme = LocalHighlightTheme.current
+    val highlighted by rememberHighlightedCode(code, language, theme)
+
+    Text(
+        text = highlighted ?: AnnotatedString(code),
+        style = TextStyle(
+            color = theme.defaultTextColor.takeIf { it != Color.Unspecified } ?: Color.White,
+            fontFamily = FontFamily.Monospace,
+            fontSize = 12.sp,
+            lineHeight = 16.sp
+        ),
+        modifier = modifier
+    )
 }
 
 @Composable

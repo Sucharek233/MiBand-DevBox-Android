@@ -53,6 +53,7 @@ import com.sucharek.miband_interconnect_test.ui.screens.deviceselection.DeviceSe
 import com.sucharek.miband_interconnect_test.ui.screens.maindashboard.MainDashboardScreen
 import com.sucharek.miband_interconnect_test.ui.screens.maindashboard.WatchViewModel
 import com.sucharek.miband_interconnect_test.ui.theme.Miband_interconnect_testTheme
+import dev.hossain.highlight.ui.HighlightThemeProvider
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,206 +66,208 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             Miband_interconnect_testTheme {
-                val navController = rememberNavController()
+                HighlightThemeProvider {
+                    val navController = rememberNavController()
 
-                // By instantiating the ViewModel here at the graph root, 
-                // it persists cleanly across screen swaps.
-                val watchViewModel: WatchViewModel = viewModel {
-                    WatchViewModel(deviceManager)
-                }
+                    // By instantiating the ViewModel here at the graph root, 
+                    // it persists cleanly across screen swaps.
+                    val watchViewModel: WatchViewModel = viewModel {
+                        WatchViewModel(deviceManager)
+                    }
 
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = Screen.DeviceSelection,
-                        modifier = Modifier.padding(innerPadding),
-                        enterTransition = { fadeIn(animationSpec = tween(200)) },
-                        exitTransition = { fadeOut(animationSpec = tween(200)) },
-                        popEnterTransition = { fadeIn(animationSpec = tween(200)) },
-                        popExitTransition = { fadeOut(animationSpec = tween(200)) }
-                    ) {
-                        composable<Screen.DeviceSelection> {
-                            DeviceSelectionScreen(
-                                viewModel = watchViewModel,
-                                onDeviceSelected = { selectedNode ->
-                                    watchViewModel.connectToDevice(selectedNode, applicationContext)
-                                    navController.navigate(Screen.MainDashboard) {
-                                        popUpTo<Screen.DeviceSelection> { inclusive = true }
+                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                        NavHost(
+                            navController = navController,
+                            startDestination = Screen.DeviceSelection,
+                            modifier = Modifier.padding(innerPadding),
+                            enterTransition = { fadeIn(animationSpec = tween(200)) },
+                            exitTransition = { fadeOut(animationSpec = tween(200)) },
+                            popEnterTransition = { fadeIn(animationSpec = tween(200)) },
+                            popExitTransition = { fadeOut(animationSpec = tween(200)) }
+                        ) {
+                            composable<Screen.DeviceSelection> {
+                                DeviceSelectionScreen(
+                                    viewModel = watchViewModel,
+                                    onDeviceSelected = { selectedNode ->
+                                        watchViewModel.connectToDevice(selectedNode, applicationContext)
+                                        navController.navigate(Screen.MainDashboard) {
+                                            popUpTo<Screen.DeviceSelection> { inclusive = true }
+                                        }
                                     }
+                                )
+                            }
+
+                            composable<Screen.MainDashboard> {
+                                MainDashboardScreen(
+                                    viewModel = watchViewModel,
+                                    onNavigateToCategory = { categoryScreen ->
+                                        navController.navigate(categoryScreen)
+                                    }
+                                )
+                            }
+
+                            // Terminal
+                            composable<Screen.RemoteTerminal> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val terminalViewModel: TerminalViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    TerminalViewModel(watchViewModel)
                                 }
-                            )
-                        }
+                                TerminalScreen(viewModel = terminalViewModel)
+                            }
 
-                        composable<Screen.MainDashboard> {
-                            MainDashboardScreen(
-                                viewModel = watchViewModel,
-                                onNavigateToCategory = { categoryScreen ->
-                                    navController.navigate(categoryScreen)
+                            // File explorer
+                            composable<Screen.FileExplorer> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val explorerViewModel: FileExplorerViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    FileExplorerViewModel(watchViewModel, initialPath = "/")
                                 }
-                            )
-                        }
-
-                        // Terminal
-                        composable<Screen.RemoteTerminal> {
-                            val activity = LocalActivity.current as ComponentActivity
-                            val terminalViewModel: TerminalViewModel = viewModel(viewModelStoreOwner = activity) {
-                                TerminalViewModel(watchViewModel)
+                                FileExplorerScreen(viewModel = explorerViewModel)
                             }
-                            TerminalScreen(viewModel = terminalViewModel)
-                        }
 
-                        // File explorer
-                        composable<Screen.FileExplorer> {
-                            val activity = LocalActivity.current as ComponentActivity
-                            val explorerViewModel: FileExplorerViewModel = viewModel(viewModelStoreOwner = activity) {
-                                FileExplorerViewModel(watchViewModel, initialPath = "/")
-                            }
-                            FileExplorerScreen(viewModel = explorerViewModel)
-                        }
-
-                        // JS shell
-                        composable<Screen.QjsShell> {
-                            val activity = LocalActivity.current as ComponentActivity
-                            val jsViewModel: QjsShellViewModel = viewModel(viewModelStoreOwner = activity) {
-                                QjsShellViewModel(watchViewModel)
-                            }
-                            QjsShellScreen(viewModel = jsViewModel)
-                        }
-
-                        // Device Info
-                        composable<Screen.DeviceInfo> {
-                            val activity = LocalActivity.current as ComponentActivity
-                            val deviceViewModel: DeviceViewModel = viewModel(viewModelStoreOwner = activity) {
-                                DeviceViewModel(watchViewModel)
-                            }
-                            DeviceScreen(viewModel = deviceViewModel)
-                        }
-
-                        // Lua shell
-                        composable<Screen.LuaShell> {
-                            val activity = LocalActivity.current as ComponentActivity
-                            val luaViewModel: LuaShellViewModel = viewModel(viewModelStoreOwner = activity) {
-                                LuaShellViewModel(watchViewModel)
-                            }
-                            LuaShellScreen(viewModel = luaViewModel)
-                        }
-
-                        // Module compatibility
-                        composable<Screen.ModuleCompatibility> {
-                            val activity = LocalActivity.current as ComponentActivity
-                            val modulesViewModel: ModuleCompatibilityViewModel = viewModel(viewModelStoreOwner = activity) {
-                                ModuleCompatibilityViewModel(watchViewModel)
-                            }
-                            ModuleCompatibilityScreen(viewModel = modulesViewModel)
-                        }
-
-                        // Sensors
-                        composable<Screen.Sensors> {
-                            val activity = LocalActivity.current as ComponentActivity
-                            val sensorsViewModel: SensorViewModel = viewModel(viewModelStoreOwner = activity) {
-                                SensorViewModel(watchViewModel)
-                            }
-                            SensorScreen(
-                                viewModel = sensorsViewModel,
-                                onSensorClick = { sensorName ->
-                                    navController.navigate(Screen.SensorChart(sensorName))
+                            // JS shell
+                            composable<Screen.QjsShell> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val jsViewModel: QjsShellViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    QjsShellViewModel(watchViewModel)
                                 }
-                            )
-                        }
-
-                        composable<Screen.SystemLogs> {
-                            val activity = LocalActivity.current as ComponentActivity
-                            val logsViewModel: SystemLogsViewModel = viewModel(viewModelStoreOwner = activity) {
-                                SystemLogsViewModel(watchViewModel)
+                                QjsShellScreen(viewModel = jsViewModel)
                             }
-                            SystemLogsScreen(viewModel = logsViewModel)
-                        }
 
-                        composable<Screen.LuaSensors> {
-                            val activity = LocalActivity.current as ComponentActivity
-                            val sensorsViewModel: LuaSensorViewModel = viewModel(viewModelStoreOwner = activity) {
-                                LuaSensorViewModel(watchViewModel)
-                            }
-                            LuaSensorScreen(
-                                viewModel = sensorsViewModel,
-                                onBack = { navController.popBackStack() },
-                                onSensorSubscribed = { sensorName ->
-                                    navController.navigate(Screen.LuaSensorChart(sensorName))
+                            // Device Info
+                            composable<Screen.DeviceInfo> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val deviceViewModel: DeviceViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    DeviceViewModel(watchViewModel)
                                 }
-                            )
-                        }
-
-                        // Apps
-                        composable<Screen.Apps> {
-                            val activity = LocalActivity.current as ComponentActivity
-                            val appsViewModel: AppListViewModel = viewModel(viewModelStoreOwner = activity) {
-                                AppListViewModel(watchViewModel)
+                                DeviceScreen(viewModel = deviceViewModel)
                             }
-                            AppListScreen(
-                                viewModel = appsViewModel,
-                                onAppClick = { app ->
-                                    navController.navigate(Screen.AppDetail(app.packageName, app.name))
+
+                            // Lua shell
+                            composable<Screen.LuaShell> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val luaViewModel: LuaShellViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    LuaShellViewModel(watchViewModel)
                                 }
-                            )
-                        }
-
-                        composable<Screen.AppDetail> { backStackEntry ->
-                            val appRoute = backStackEntry.toRoute<Screen.AppDetail>()
-                            val detailViewModel: AppDetailViewModel = viewModel {
-                                AppDetailViewModel(watchViewModel, appRoute.packageName)
+                                LuaShellScreen(viewModel = luaViewModel)
                             }
-                            AppDetailScreen(
-                                viewModel = detailViewModel,
-                                appName = appRoute.appName,
-                                onEditManifest = {
-                                    navController.navigate(Screen.AppManifest(appRoute.packageName))
+
+                            // Module compatibility
+                            composable<Screen.ModuleCompatibility> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val modulesViewModel: ModuleCompatibilityViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    ModuleCompatibilityViewModel(watchViewModel)
                                 }
-                            )
-                        }
-
-                        composable<Screen.AppManifest> { backStackEntry ->
-                            val appRoute = backStackEntry.toRoute<Screen.AppManifest>()
-                            val manifestViewModel: AppManifestViewModel = viewModel {
-                                AppManifestViewModel(watchViewModel, appRoute.packageName)
+                                ModuleCompatibilityScreen(viewModel = modulesViewModel)
                             }
-                            AppManifestScreen(viewModel = manifestViewModel)
-                        }
 
-                        composable<Screen.LuaSensorChart> { backStackEntry ->
-                            val sensorChart = backStackEntry.toRoute<Screen.LuaSensorChart>()
-                            val activity = LocalActivity.current as ComponentActivity
-                            val sensorsViewModel: LuaSensorViewModel = viewModel(viewModelStoreOwner = activity) {
-                                LuaSensorViewModel(watchViewModel)
+                            // Sensors
+                            composable<Screen.Sensors> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val sensorsViewModel: SensorViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    SensorViewModel(watchViewModel)
+                                }
+                                SensorScreen(
+                                    viewModel = sensorsViewModel,
+                                    onSensorClick = { sensorName ->
+                                        navController.navigate(Screen.SensorChart(sensorName))
+                                    }
+                                )
                             }
-                            SensorChartScreen(
-                                viewModel = sensorsViewModel,
-                                sensorName = sensorChart.sensorName,
-                                onBack = { navController.popBackStack() }
-                            )
-                        }
 
-                        composable<Screen.SensorChart> { backStackEntry ->
-                            val sensorChart = backStackEntry.toRoute<Screen.SensorChart>()
-                            val activity = LocalActivity.current as ComponentActivity
-                            val sensorsViewModel: SensorViewModel = viewModel(viewModelStoreOwner = activity) {
-                                SensorViewModel(watchViewModel)
+                            composable<Screen.SystemLogs> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val logsViewModel: SystemLogsViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    SystemLogsViewModel(watchViewModel)
+                                }
+                                SystemLogsScreen(viewModel = logsViewModel)
                             }
-                            SensorChartScreen(
-                                viewModel = sensorsViewModel,
-                                sensorName = sensorChart.sensorName,
-                                onBack = { navController.popBackStack() }
-                            )
-                        }
 
-                        composable<Screen.Ping> {
-                            val activity = LocalActivity.current as ComponentActivity
-                            val pingViewModel: PingViewModel = viewModel(viewModelStoreOwner = activity) {
-                                PingViewModel(watchViewModel)
+                            composable<Screen.LuaSensors> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val sensorsViewModel: LuaSensorViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    LuaSensorViewModel(watchViewModel)
+                                }
+                                LuaSensorScreen(
+                                    viewModel = sensorsViewModel,
+                                    onBack = { navController.popBackStack() },
+                                    onSensorSubscribed = { sensorName ->
+                                        navController.navigate(Screen.LuaSensorChart(sensorName))
+                                    }
+                                )
                             }
-                            PingScreen(
-                                viewModel = pingViewModel,
-                                onBack = { navController.popBackStack() }
-                            )
+
+                            // Apps
+                            composable<Screen.Apps> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val appsViewModel: AppListViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    AppListViewModel(watchViewModel)
+                                }
+                                AppListScreen(
+                                    viewModel = appsViewModel,
+                                    onAppClick = { app ->
+                                        navController.navigate(Screen.AppDetail(app.packageName, app.name))
+                                    }
+                                )
+                            }
+
+                            composable<Screen.AppDetail> { backStackEntry ->
+                                val appRoute = backStackEntry.toRoute<Screen.AppDetail>()
+                                val detailViewModel: AppDetailViewModel = viewModel {
+                                    AppDetailViewModel(watchViewModel, appRoute.packageName)
+                                }
+                                AppDetailScreen(
+                                    viewModel = detailViewModel,
+                                    appName = appRoute.appName,
+                                    onEditManifest = {
+                                        navController.navigate(Screen.AppManifest(appRoute.packageName))
+                                    }
+                                )
+                            }
+
+                            composable<Screen.AppManifest> { backStackEntry ->
+                                val appRoute = backStackEntry.toRoute<Screen.AppManifest>()
+                                val manifestViewModel: AppManifestViewModel = viewModel {
+                                    AppManifestViewModel(watchViewModel, appRoute.packageName)
+                                }
+                                AppManifestScreen(viewModel = manifestViewModel)
+                            }
+
+                            composable<Screen.LuaSensorChart> { backStackEntry ->
+                                val sensorChart = backStackEntry.toRoute<Screen.LuaSensorChart>()
+                                val activity = LocalActivity.current as ComponentActivity
+                                val sensorsViewModel: LuaSensorViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    LuaSensorViewModel(watchViewModel)
+                                }
+                                SensorChartScreen(
+                                    viewModel = sensorsViewModel,
+                                    sensorName = sensorChart.sensorName,
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
+
+                            composable<Screen.SensorChart> { backStackEntry ->
+                                val sensorChart = backStackEntry.toRoute<Screen.SensorChart>()
+                                val activity = LocalActivity.current as ComponentActivity
+                                val sensorsViewModel: SensorViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    SensorViewModel(watchViewModel)
+                                }
+                                SensorChartScreen(
+                                    viewModel = sensorsViewModel,
+                                    sensorName = sensorChart.sensorName,
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
+
+                            composable<Screen.Ping> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val pingViewModel: PingViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    PingViewModel(watchViewModel)
+                                }
+                                PingScreen(
+                                    viewModel = pingViewModel,
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
                         }
                     }
                 }

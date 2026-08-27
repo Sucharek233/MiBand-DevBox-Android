@@ -18,12 +18,20 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.hossain.highlight.ui.ExperimentalHighlightApi
+import dev.hossain.highlight.ui.SyntaxHighlightedCode
+import dev.hossain.highlight.ui.rememberHighlightEngine
+import dev.hossain.highlight.ui.rememberHighlightedCode
+import dev.hossain.highlight.ui.rememberSyntaxHighlightedEditorValue
+import dev.hossain.highlight.ui.LocalHighlightTheme
 import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.ConsoleEntry
 import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsBg
 import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsDimArrow
@@ -33,20 +41,28 @@ import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevT
 import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsPromptBlue
 import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.JsonTreeItem
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalHighlightApi::class)
 @Composable
 fun LuaShellScreen(
     viewModel: LuaShellViewModel,
     modifier: Modifier = Modifier
 ) {
-    var codeInput by remember { mutableStateOf("") }
+    var codeInput by remember { mutableStateOf(TextFieldValue("")) }
     val entries by viewModel.entries.collectAsState()
+    
+    val theme = LocalHighlightTheme.current
+    
+    val displayValue = rememberSyntaxHighlightedEditorValue(
+        value = codeInput,
+        language = "lua",
+        theme = theme
+    )
 
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
     val interactionSource = remember { MutableInteractionSource() }
 
-    LaunchedEffect(entries.size, codeInput) {
+    LaunchedEffect(entries.size, codeInput.text) {
         val totalItems = entries.size + 1
         if (totalItems > 0) {
             listState.animateScrollToItem(totalItems - 1)
@@ -54,9 +70,9 @@ fun LuaShellScreen(
     }
 
     val onSend = {
-        if (codeInput.isNotBlank()) {
-            val code = codeInput
-            codeInput = ""
+        if (codeInput.text.isNotBlank()) {
+            val code = codeInput.text
+            codeInput = TextFieldValue("")
             viewModel.executeLuaCode(code)
         }
     }
@@ -120,13 +136,13 @@ fun LuaShellScreen(
                                                 text = "lua> ",
                                                 color = DevToolsPromptBlue,
                                                 fontSize = 12.sp,
-                                                fontFamily = FontFamily.Monospace
+                                                fontFamily = FontFamily.Monospace,
+                                                modifier = Modifier.padding(top = 4.dp)
                                             )
-                                            Text(
-                                                text = entry.code,
-                                                color = Color.White,
-                                                fontSize = 12.sp,
-                                                fontFamily = FontFamily.Monospace
+                                            PureSyntaxHighlightedCode(
+                                                code = entry.code,
+                                                language = "lua",
+                                                modifier = Modifier.weight(1f)
                                             )
                                         }
                                     }
@@ -210,7 +226,7 @@ fun LuaShellScreen(
                                 )
 
                                 BasicTextField(
-                                    value = codeInput,
+                                    value = displayValue,
                                     onValueChange = { codeInput = it },
                                     textStyle = TextStyle(
                                         color = Color.White,
@@ -250,10 +266,14 @@ fun LuaShellScreen(
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         LuaShellKeyButton("▲") {
-                            viewModel.getPreviousCommand()?.let { codeInput = it }
+                            viewModel.getPreviousCommand()?.let { 
+                                codeInput = TextFieldValue(it, selection = androidx.compose.ui.text.TextRange(it.length))
+                            }
                         }
                         LuaShellKeyButton("▼") {
-                            viewModel.getNextCommand()?.let { codeInput = it }
+                            viewModel.getNextCommand()?.let { 
+                                codeInput = TextFieldValue(it, selection = androidx.compose.ui.text.TextRange(it.length))
+                            }
                         }
                         LuaShellKeyButton("CLR") {
                             viewModel.clearConsole()
@@ -277,6 +297,27 @@ fun LuaShellScreen(
             }
         }
     }
+}
+
+@Composable
+private fun PureSyntaxHighlightedCode(
+    code: String,
+    language: String,
+    modifier: Modifier = Modifier
+) {
+    val theme = LocalHighlightTheme.current
+    val highlighted by rememberHighlightedCode(code, language, theme)
+    
+    Text(
+        text = highlighted ?: AnnotatedString(code),
+        style = TextStyle(
+            color = theme.defaultTextColor.takeIf { it != Color.Unspecified } ?: Color.White,
+            fontFamily = FontFamily.Monospace,
+            fontSize = 12.sp,
+            lineHeight = 16.sp
+        ),
+        modifier = modifier
+    )
 }
 
 @Composable
