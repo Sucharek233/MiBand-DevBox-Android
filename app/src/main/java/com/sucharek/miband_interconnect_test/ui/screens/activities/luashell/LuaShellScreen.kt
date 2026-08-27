@@ -62,14 +62,12 @@ fun LuaShellScreen(
     }
 
     Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = modifier
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
                 .background(DevToolsBg)
                 .imePadding()
         ) {
@@ -256,9 +254,6 @@ fun LuaShellScreen(
                         }
                         LuaShellKeyButton("▼") {
                             viewModel.getNextCommand()?.let { codeInput = it }
-                        }
-                        LuaShellKeyButton("TAB") {
-                            codeInput += "  "
                         }
                         LuaShellKeyButton("CLR") {
                             viewModel.clearConsole()

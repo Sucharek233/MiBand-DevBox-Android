@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,7 +30,7 @@ fun MainDashboardScreen(
     val isAppInstalled by viewModel.isWatchAppInstalled.collectAsState()
     val isLuaActive by viewModel.luaServiceActive.collectAsState()
 
-    var selectedService by remember { mutableStateOf(ServiceType.QUICKJS) }
+    var selectedService by rememberSaveable { mutableStateOf(ServiceType.QUICKJS) }
 
     Scaffold(
         topBar = {

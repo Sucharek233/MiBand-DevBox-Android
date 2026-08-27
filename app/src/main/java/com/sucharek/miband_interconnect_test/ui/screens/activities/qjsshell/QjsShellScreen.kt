@@ -55,14 +55,12 @@ fun QjsShellScreen(
     }
 
     Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0), // Prevents double-inset bottom gap bug
         modifier = modifier
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
                 .background(DevToolsBg)
                 .imePadding() // Smoothly shifts content without creating a gap
         ) {
@@ -251,9 +249,6 @@ fun QjsShellScreen(
                         }
                         DevToolsKeyButton("▼") {
                             viewModel.getNextCommand()?.let { codeInput = it }
-                        }
-                        DevToolsKeyButton("TAB") {
-                            codeInput += "  "
                         }
                         DevToolsKeyButton("CLR") {
                             viewModel.clearConsole()

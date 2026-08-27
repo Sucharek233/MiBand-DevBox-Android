@@ -22,6 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,84 +54,88 @@ fun SensorScreen(
 
     var pendingUnavailableSensor by remember { mutableStateOf<SensorInfo?>(null) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // --- Header ---
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    Scaffold(
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
         ) {
+            // --- Header ---
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Sensors",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                if (activeSensor != null) {
+                    StreamStatusChip(state = subscriptionState, activeSensor = activeSensor!!)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                Button(
+                    onClick = { viewModel.discoverSensors() },
+                    enabled = !isDiscovering,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (isDiscovering) "Scanning Sensors…" else "Verify Availability")
+                }
+
+                if (isDiscovering) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LinearProgressIndicator(
+                        progress = { scanProgress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- Device Sensors List ---
             Text(
-                text = "Sensors",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                text = "Device Sensors",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
 
-            if (activeSensor != null) {
-                StreamStatusChip(state = subscriptionState, activeSensor = activeSensor!!)
-            }
-        }
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // --- Verify Action Button ---
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Button(
-                onClick = { viewModel.discoverSensors() },
-                enabled = !isDiscovering,
-                modifier = Modifier.fillMaxWidth()
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f).padding(horizontal = 16.dp)
             ) {
-                Text(if (isDiscovering) "Scanning Sensors…" else "Verify Availability")
-            }
-
-            if (isDiscovering) {
-                Spacer(modifier = Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = { scanProgress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // --- Device Sensors List ---
-        Text(
-            text = "Device Sensors",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            items(
-                items = sensorList,
-                key = { it.name }
-            ) { sensor ->
-                SensorItemRow(
-                    sensor = sensor,
-                    isActive = activeSensor == sensor.name,
-                    onClick = {
-                        if (sensor.availability == SensorAvailability.UNAVAILABLE) {
-                            pendingUnavailableSensor = sensor
-                        } else {
-                            viewModel.subscribeTo(sensor.name)
-                            onSensorClick(sensor.name)
+                items(
+                    items = sensorList,
+                    key = { it.name }
+                ) { sensor ->
+                    SensorItemRow(
+                        sensor = sensor,
+                        isActive = activeSensor == sensor.name,
+                        onClick = {
+                            if (sensor.availability == SensorAvailability.UNAVAILABLE) {
+                                pendingUnavailableSensor = sensor
+                            } else {
+                                viewModel.subscribeTo(sensor.name)
+                                onSensorClick(sensor.name)
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }
