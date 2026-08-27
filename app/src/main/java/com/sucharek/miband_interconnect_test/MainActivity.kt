@@ -21,6 +21,14 @@ import androidx.navigation.toRoute
 import com.sucharek.miband_interconnect_test.interconnect.DeviceManager
 import com.sucharek.miband_interconnect_test.ui.navigation.Screen
 
+import com.sucharek.miband_interconnect_test.ui.screens.activities.apps.AppDetailScreen
+import com.sucharek.miband_interconnect_test.ui.screens.activities.apps.AppDetailViewModel
+import com.sucharek.miband_interconnect_test.ui.screens.activities.apps.AppListScreen
+import com.sucharek.miband_interconnect_test.ui.screens.activities.apps.AppListViewModel
+import com.sucharek.miband_interconnect_test.ui.screens.activities.apps.AppManifestScreen
+import com.sucharek.miband_interconnect_test.ui.screens.activities.apps.AppManifestViewModel
+import com.sucharek.miband_interconnect_test.ui.screens.activities.device.DeviceScreen
+import com.sucharek.miband_interconnect_test.ui.screens.activities.device.DeviceViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.files.FileExplorerScreen
 import com.sucharek.miband_interconnect_test.ui.screens.activities.files.FileExplorerViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.luashell.LuaShellScreen
@@ -123,6 +131,15 @@ class MainActivity : ComponentActivity() {
                             QjsShellScreen(viewModel = jsViewModel)
                         }
 
+                        // Device Info
+                        composable<Screen.DeviceInfo> {
+                            val activity = LocalActivity.current as ComponentActivity
+                            val deviceViewModel: DeviceViewModel = viewModel(viewModelStoreOwner = activity) {
+                                DeviceViewModel(watchViewModel)
+                            }
+                            DeviceScreen(viewModel = deviceViewModel)
+                        }
+
                         // Lua shell
                         composable<Screen.LuaShell> {
                             val activity = LocalActivity.current as ComponentActivity
@@ -175,6 +192,42 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(Screen.LuaSensorChart(sensorName))
                                 }
                             )
+                        }
+
+                        // Apps
+                        composable<Screen.Apps> {
+                            val activity = LocalActivity.current as ComponentActivity
+                            val appsViewModel: AppListViewModel = viewModel(viewModelStoreOwner = activity) {
+                                AppListViewModel(watchViewModel)
+                            }
+                            AppListScreen(
+                                viewModel = appsViewModel,
+                                onAppClick = { app ->
+                                    navController.navigate(Screen.AppDetail(app.packageName, app.name))
+                                }
+                            )
+                        }
+
+                        composable<Screen.AppDetail> { backStackEntry ->
+                            val appRoute = backStackEntry.toRoute<Screen.AppDetail>()
+                            val detailViewModel: AppDetailViewModel = viewModel {
+                                AppDetailViewModel(watchViewModel, appRoute.packageName)
+                            }
+                            AppDetailScreen(
+                                viewModel = detailViewModel,
+                                appName = appRoute.appName,
+                                onEditManifest = {
+                                    navController.navigate(Screen.AppManifest(appRoute.packageName))
+                                }
+                            )
+                        }
+
+                        composable<Screen.AppManifest> { backStackEntry ->
+                            val appRoute = backStackEntry.toRoute<Screen.AppManifest>()
+                            val manifestViewModel: AppManifestViewModel = viewModel {
+                                AppManifestViewModel(watchViewModel, appRoute.packageName)
+                            }
+                            AppManifestScreen(viewModel = manifestViewModel)
                         }
 
                         composable<Screen.LuaSensorChart> { backStackEntry ->

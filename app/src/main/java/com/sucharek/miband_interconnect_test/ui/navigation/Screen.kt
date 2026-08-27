@@ -17,6 +17,9 @@ sealed interface Screen {
     object QjsShell : Screen
 
     @Serializable
+    object DeviceInfo : Screen
+
+    @Serializable
     object LuaShell : Screen
 
     @Serializable
@@ -30,6 +33,15 @@ sealed interface Screen {
 
     @Serializable
     object SystemLogs : Screen
+
+    @Serializable
+    object Apps : Screen
+
+    @Serializable
+    data class AppDetail(val packageName: String, val appName: String) : Screen
+
+    @Serializable
+    data class AppManifest(val packageName: String) : Screen
 
     @Serializable
     object LuaSensors : Screen

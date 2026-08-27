@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,32 +70,51 @@ fun DeviceScreen(
                         .verticalScroll(rememberScrollState())
                 ) {
                     InfoSection("Identity") {
+                        InfoRow("Device Type", deviceInfo!!.deviceType)
                         InfoRow("Device ID", deviceInfo!!.deviceId)
+                        InfoRow("IMEI", deviceInfo!!.imei)
                         InfoRow("Serial", deviceInfo!!.serial)
                         InfoRow("Model", deviceInfo!!.model)
-                        InfoRow("Product", deviceInfo!!.productName)
+                        InfoRow("Product", deviceInfo!!.product)
+                        InfoRow("Manufacturer", deviceInfo!!.manufacturer)
+                        InfoRow("Brand", deviceInfo!!.brand)
                     }
 
                     InfoSection("Software") {
-                        InfoRow("OS", deviceInfo!!.osName)
+                        InfoRow("OS Type", deviceInfo!!.osType)
                         InfoRow("OS Version", "${deviceInfo!!.osVersionName} (${deviceInfo!!.osVersionCode})")
                         InfoRow("Platform", "${deviceInfo!!.platformVersionName} (${deviceInfo!!.platformVersionCode})")
+                        InfoRow("API Level", deviceInfo!!.apiLevel)
                         InfoRow("Language", deviceInfo!!.language)
                         InfoRow("Region", deviceInfo!!.region)
                     }
 
                     InfoSection("Display") {
                         InfoRow("Resolution", "${deviceInfo!!.screenWidth}x${deviceInfo!!.screenHeight}")
-                        InfoRow("Pixel Ratio", String.format(Locale.US, "%.2f", deviceInfo!!.pixelRatio))
-                        InfoRow("Status Bar", "${deviceInfo!!.statusBarHeight}px")
+                        InfoRow("Density", String.format(Locale.US, "%.1f", deviceInfo!!.screenDensity))
                         InfoRow("Shape", deviceInfo!!.screenShape)
                     }
 
                     deviceInfo!!.storage?.let { storage ->
+                        val usedPercent = if (storage.total > 0) storage.used.toFloat() / storage.total else 0f
                         InfoSection("Storage") {
+                            LinearProgressIndicator(
+                                progress = { usedPercent },
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            )
                             InfoRow("Total", formatSize(storage.total))
                             InfoRow("Available", formatSize(storage.available))
                             InfoRow("Used", formatSize(storage.used))
+                        }
+                    }
+
+                    if (deviceInfo!!.other.isNotEmpty()) {
+                        InfoSection("Other") {
+                            deviceInfo!!.other.forEach { (key, value) ->
+                                InfoRow(key, value)
+                            }
                         }
                     }
                     
@@ -152,8 +170,8 @@ private fun InfoRow(label: String, value: String) {
 }
 
 private fun formatSize(bytes: Long): String {
-    if (bytes < 1024) return "$bytes B"
-    val exp = (Math.log(bytes.toDouble()) / Math.log(1024.0)).toInt()
-    val pre = "KMGTPE"[exp - 1]
-    return String.format(Locale.US, "%.1f %sB", bytes / Math.pow(1024.0, exp.toDouble()), pre)
+    if (bytes <= 0) return "0 B"
+    val units = arrayOf("B", "KB", "MB", "GB", "TB")
+    val digitGroups = (Math.log10(bytes.toDouble()) / Math.log10(1024.0)).toInt()
+    return String.format(Locale.US, "%.1f %s", bytes / Math.pow(1024.0, digitGroups.toDouble()), units[digitGroups])
 }

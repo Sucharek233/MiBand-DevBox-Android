@@ -186,8 +186,10 @@ private fun DashboardCategoryCard(
                     DashboardCategory.PING -> onNavigate(Screen.Ping)
                     DashboardCategory.QJS -> onNavigate(Screen.QjsShell)
                     DashboardCategory.MODULES -> onNavigate(Screen.ModuleCompatibility)
+                    DashboardCategory.DEVICE -> onNavigate(Screen.DeviceInfo)
                     DashboardCategory.SENSORS -> onNavigate(Screen.Sensors)
                     DashboardCategory.LUASENSORS -> onNavigate(Screen.LuaSensors)
+                    DashboardCategory.APPS -> onNavigate(Screen.Apps)
                     DashboardCategory.SYSTEMLOGS -> onNavigate(Screen.SystemLogs)
                 }
             },

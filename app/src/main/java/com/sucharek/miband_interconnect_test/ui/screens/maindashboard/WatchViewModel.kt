@@ -6,6 +6,7 @@ import com.sucharek.miband_interconnect_test.interconnect.Apps
 import com.sucharek.miband_interconnect_test.interconnect.DeviceManager
 import com.sucharek.miband_interconnect_test.interconnect.Messages
 import com.sucharek.miband_interconnect_test.interconnect.Subscriptions
+import com.sucharek.miband_interconnect_test.ui.screens.activities.apps.AppsRepository
 import com.xiaomi.xms.wearable.node.DataItem
 import com.xiaomi.xms.wearable.node.DataSubscribeResult
 import com.xiaomi.xms.wearable.node.Node
@@ -76,6 +77,14 @@ class WatchViewModel(
     private val _luaShellMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
     val luaShellMessages: SharedFlow<String> = _luaShellMessages.asSharedFlow()
 
+    // Apps
+    private val _appsMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
+    val appsMessages: SharedFlow<String> = _appsMessages.asSharedFlow()
+
+    // System Info
+    private val _sysinfoMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
+    val sysinfoMessages: SharedFlow<String> = _sysinfoMessages.asSharedFlow()
+
     // System / Interconnect Logs
     private val _systemMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
     val systemMessages: SharedFlow<String> = _systemMessages.asSharedFlow()
@@ -83,6 +92,8 @@ class WatchViewModel(
     // Mailbox Busy Events
     private val _mailboxBusyEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val mailboxBusyEvents: SharedFlow<Unit> = _mailboxBusyEvents.asSharedFlow()
+
+    val appsRepository = AppsRepository(this, viewModelScope)
 
     var messagesEngine: Messages? = null
         private set
@@ -218,6 +229,8 @@ class WatchViewModel(
                     "modules" -> _modulesMessages.emit(message)
                     "sensors" -> _sensorMessages.emit(message)
                     "sensorsLua" -> _luaSensorsMessages.emit(message)
+                    "sysinfo" -> _sysinfoMessages.emit(message)
+                    "apps" -> _appsMessages.emit(message)
                     "interconnect" -> {
                         _systemMessages.emit(message)
                         if (json.optString("message") == "Mailbox busy") {
