@@ -76,6 +76,14 @@ class WatchViewModel(
     private val _luaShellMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
     val luaShellMessages: SharedFlow<String> = _luaShellMessages.asSharedFlow()
 
+    // System / Interconnect Logs
+    private val _systemMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
+    val systemMessages: SharedFlow<String> = _systemMessages.asSharedFlow()
+
+    // Mailbox Busy Events
+    private val _mailboxBusyEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val mailboxBusyEvents: SharedFlow<Unit> = _mailboxBusyEvents.asSharedFlow()
+
     var messagesEngine: Messages? = null
         private set
 
@@ -143,7 +151,7 @@ class WatchViewModel(
                 appApi.launchApp()
             } catch (e: Exception) {
                 // Log or handle error if needed
-                _terminalMessages.emit("LOCAL ERROR: Failed to launch watch app: ${e.message}")
+                _systemMessages.emit("Failed to launch watch app: ${e.message}")
             }
         }
     }
@@ -152,9 +160,8 @@ class WatchViewModel(
         viewModelScope.launch {
             try {
                 sendStructuredMessage("ping")
-                _terminalMessages.emit("LOCAL: Sent Ping request")
             } catch (e: Exception) {
-                _terminalMessages.emit("LOCAL ERROR: Failed to send Ping")
+                _systemMessages.emit("Failed to send Ping")
             }
         }
     }
@@ -166,15 +173,15 @@ class WatchViewModel(
                     if (result == DataSubscribeResult.RESULT_CONNECTION_DISCONNECTED) {
                         _connectionState.value = WatchConnectionState.Disconnected
                         _luaServiceActive.value = false
-                        _terminalMessages.emit("SYSTEM: Watch Disconnected")
+                        _systemMessages.emit("SYSTEM: Watch Disconnected")
                     } else if (result == DataSubscribeResult.RESULT_CONNECTION_CONNECTED) {
                         val nodeName = selectedNode?.name ?: "Unknown Device"
                         _connectionState.value = WatchConnectionState.Connected(nodeName)
-                        _terminalMessages.emit("SYSTEM: Watch Connected")
+                        _systemMessages.emit("SYSTEM: Watch Connected")
                     }
                 }
                 else -> {
-                    _terminalMessages.emit("SYSTEM: Sub Update $item = $result")
+                    _systemMessages.emit("SYSTEM: Sub Update $item = $result")
                 }
             }
         }
@@ -187,6 +194,12 @@ class WatchViewModel(
             try {
                 val json = JSONObject(message)
                 val type = json.optString("type")
+                val state = json.optString("state")
+                val errorMsg = json.optString("msg").ifEmpty { json.optString("message") }
+
+                if (state == "error" && errorMsg.contains("Mailbox")) {
+                    _mailboxBusyEvents.emit(Unit)
+                }
 
                 when (type) {
                     "ping" -> {
@@ -205,14 +218,18 @@ class WatchViewModel(
                     "modules" -> _modulesMessages.emit(message)
                     "sensors" -> _sensorMessages.emit(message)
                     "sensorsLua" -> _luaSensorsMessages.emit(message)
+                    "interconnect" -> {
+                        _systemMessages.emit(message)
+                        if (json.optString("message") == "Mailbox busy") {
+                            _mailboxBusyEvents.emit(Unit)
+                        }
+                    }
                     else -> {
-                        // for now keep other messages in terminal log
-                        _terminalMessages.emit("RECV: $message")
+                        _systemMessages.emit("RECV (Unknown Type: $type): $message")
                     }
                 }
             } catch (e: Exception) {
-                // for now keep other messages in terminal log
-                _terminalMessages.emit(message)
+                _systemMessages.emit("RECV (Raw/Parse Error): $message")
             }
         }
     }
@@ -223,8 +240,7 @@ class WatchViewModel(
             try {
                 messagesEngine?.sendMessage(text)
             } catch (e: Exception) {
-                // for now keep other messages in terminal log
-                _terminalMessages.emit("LOCAL ERROR: Failed to dispatch data payload")
+                _systemMessages.emit("LOCAL ERROR: Failed to dispatch data payload")
             }
         }
     }
@@ -234,8 +250,7 @@ class WatchViewModel(
             try {
                 messagesEngine?.sendRawMessage(byteArray)
             } catch (e: Exception) {
-                // for now keep other messages in terminal log
-                _terminalMessages.emit("LOCAL ERROR: Failed to dispatch raw data payload")
+                _systemMessages.emit("LOCAL ERROR: Failed to dispatch raw data payload")
             }
         }
     }
@@ -250,7 +265,7 @@ class WatchViewModel(
 
                 sendMessage(envelope.toString())
             } catch (e: Exception) {
-                _terminalMessages.emit("LOCAL ERROR: Envelope packaging aborted due to exception")
+                _systemMessages.emit("LOCAL ERROR: Envelope packaging aborted due to exception")
             }
         }
     }

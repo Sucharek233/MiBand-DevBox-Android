@@ -1,6 +1,7 @@
 package com.sucharek.miband_interconnect_test.ui.screens.maindashboard
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Folder
@@ -32,6 +33,7 @@ enum class DashboardCategory(
     LUASHELL("Lua Shell", "Run custom Lua code", ServiceType.LUA, Icons.Default.Code),
     FILES("File Explorer", "Explore the filesystem", ServiceType.LUA, Icons.Default.Folder),
     LUASENSORS("Lua Sensors", "Stream sensor data (Lua)", ServiceType.LUA, Icons.Default.Sensors),
+    SYSTEMLOGS("System Logs", "View global errors and events", ServiceType.LUA, Icons.Default.BugReport),
     
     // QuickJS Service
     QJS("VelaJS Shell", "Run custom Javascript code", ServiceType.QUICKJS, Icons.Default.Code),

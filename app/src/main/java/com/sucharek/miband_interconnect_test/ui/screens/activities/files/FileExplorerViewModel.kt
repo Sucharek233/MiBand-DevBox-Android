@@ -32,6 +32,12 @@ class FileExplorerViewModel(
             globalWatchViewModel.ioMessages.collectLatest { rawJsonEnvelopeString ->
                 try {
                     val baseJson = JSONObject(rawJsonEnvelopeString)
+                    val state = baseJson.optString("state")
+                    if (state == "error") {
+                        _isLoading.value = false
+                        return@collectLatest
+                    }
+
                     val resultJson = baseJson.getJSONObject("res")
                     
                     // Try to get the path from the response if available, otherwise fallback to currentPath
@@ -95,6 +101,12 @@ class FileExplorerViewModel(
                     _filesList.value = emptyList()
                     _isLoading.value = false
                 }
+            }
+        }
+
+        viewModelScope.launch {
+            globalWatchViewModel.mailboxBusyEvents.collectLatest {
+                _isLoading.value = false
             }
         }
 

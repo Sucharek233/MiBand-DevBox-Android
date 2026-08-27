@@ -66,6 +66,14 @@ class LuaSensorViewModel(
                 handleIncomingMessage(payload)
             }
         }
+
+        viewModelScope.launch {
+            globalWatchViewModel.mailboxBusyEvents.collectLatest {
+                _isDiscovering.value = false
+                discoveryPhase = 0
+            }
+        }
+
         discoverSensors()
     }
 
@@ -155,6 +163,8 @@ class LuaSensorViewModel(
                 "error" -> {
                     _lastError.value = (res?.toString() ?: "Unknown error") to null
                     _subscriptionState.value = SubscriptionState.ERROR
+                    _isDiscovering.value = false
+                    discoveryPhase = 0
                 }
                 "done" -> {
                     val resStr = res?.toString() ?: ""

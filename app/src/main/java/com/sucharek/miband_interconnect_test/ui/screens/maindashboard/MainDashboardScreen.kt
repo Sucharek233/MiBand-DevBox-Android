@@ -188,6 +188,7 @@ private fun DashboardCategoryCard(
                     DashboardCategory.MODULES -> onNavigate(Screen.ModuleCompatibility)
                     DashboardCategory.SENSORS -> onNavigate(Screen.Sensors)
                     DashboardCategory.LUASENSORS -> onNavigate(Screen.LuaSensors)
+                    DashboardCategory.SYSTEMLOGS -> onNavigate(Screen.SystemLogs)
                 }
             },
         colors = CardDefaults.cardColors(

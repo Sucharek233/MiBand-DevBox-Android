@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -69,11 +70,26 @@ fun LuaSensorScreen(
                     fontWeight = FontWeight.Bold
                 )
 
-                if (subscriptionState != SubscriptionState.DISCONNECTED) {
-                    StreamStatusChip(
-                        state = subscriptionState,
-                        activeSensor = activeSensor?.name ?: "Unknown"
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (subscriptionState != SubscriptionState.DISCONNECTED) {
+                        StreamStatusChip(
+                            state = subscriptionState,
+                            activeSensor = activeSensor?.name ?: "Unknown"
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    IconButton(
+                        onClick = { viewModel.discoverSensors() },
+                        enabled = !isDiscovering
+                    ) {
+                        if (isDiscovering) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        }
+                    }
                 }
             }
 
@@ -143,14 +159,6 @@ fun LuaSensorScreen(
                         onClick = { viewModel.setPendingSensor(sensor) }
                     )
                 }
-            }
-            
-            Button(
-                onClick = { viewModel.discoverSensors() },
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                enabled = !isDiscovering
-            ) {
-                Text(if (isDiscovering) "Refreshing..." else "Refresh Sensors")
             }
         }
     }

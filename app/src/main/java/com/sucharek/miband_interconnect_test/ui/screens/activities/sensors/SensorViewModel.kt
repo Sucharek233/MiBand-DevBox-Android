@@ -46,6 +46,12 @@ class SensorViewModel(
                 handleIncomingMessage(payload)
             }
         }
+
+        viewModelScope.launch {
+            globalWatchViewModel.mailboxBusyEvents.collectLatest {
+                _isDiscovering.value = false
+            }
+        }
     }
 
     // --- Actions ---

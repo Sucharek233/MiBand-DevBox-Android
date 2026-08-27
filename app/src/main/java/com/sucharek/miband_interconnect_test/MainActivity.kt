@@ -36,6 +36,8 @@ import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.QjsS
 import com.sucharek.miband_interconnect_test.ui.screens.activities.sensors.SensorScreen
 import com.sucharek.miband_interconnect_test.ui.screens.activities.sensors.SensorViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.sensors.infoScreen.SensorChartScreen
+import com.sucharek.miband_interconnect_test.ui.screens.activities.systemlogs.SystemLogsScreen
+import com.sucharek.miband_interconnect_test.ui.screens.activities.systemlogs.SystemLogsViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.terminal.TerminalScreen
 import com.sucharek.miband_interconnect_test.ui.screens.activities.terminal.TerminalViewModel
 
@@ -151,6 +153,14 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(Screen.SensorChart(sensorName))
                                 }
                             )
+                        }
+
+                        composable<Screen.SystemLogs> {
+                            val activity = LocalActivity.current as ComponentActivity
+                            val logsViewModel: SystemLogsViewModel = viewModel(viewModelStoreOwner = activity) {
+                                SystemLogsViewModel(watchViewModel)
+                            }
+                            SystemLogsScreen(viewModel = logsViewModel)
                         }
 
                         composable<Screen.LuaSensors> {

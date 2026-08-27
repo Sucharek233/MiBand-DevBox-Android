@@ -102,6 +102,14 @@ class ModuleCompatibilityViewModel(
                 handleResponse(payload)
             }
         }
+
+        viewModelScope.launch {
+            globalWatchViewModel.mailboxBusyEvents.collectLatest {
+                _modules.value = _modules.value.map {
+                    if (it.status == CompatStatus.CHECKING) it.copy(status = CompatStatus.UNKNOWN) else it
+                }
+            }
+        }
     }
 
     private fun handleResponse(payload: String) {

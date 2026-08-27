@@ -29,6 +29,9 @@ sealed interface Screen {
     object Sensors : Screen
 
     @Serializable
+    object SystemLogs : Screen
+
+    @Serializable
     object LuaSensors : Screen
 
     @Serializable
