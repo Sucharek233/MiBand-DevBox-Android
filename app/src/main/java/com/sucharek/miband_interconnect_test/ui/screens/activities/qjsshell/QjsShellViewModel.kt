@@ -23,8 +23,8 @@ class QjsShellViewModel(
     init {
         viewModelScope.launch {
             globalWatchViewModel.qjsMessages.collectLatest { payload ->
-                val entry = ConsoleEntry.parsePayload(payload)
-                _entries.value = _entries.value + entry
+                val newEntries = ConsoleEntry.parsePayload(payload)
+                _entries.value = _entries.value + newEntries
             }
         }
     }

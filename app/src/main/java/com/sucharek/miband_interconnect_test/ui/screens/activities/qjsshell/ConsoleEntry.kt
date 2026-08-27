@@ -10,32 +10,51 @@ sealed class ConsoleEntry {
         val rawResult: Any?
     ) : ConsoleEntry()
 
+    data class Log(
+        val rawResult: Any?
+    ) : ConsoleEntry()
+
     data class Error(
         val message: String,
         val stack: String? = null
     ) : ConsoleEntry()
 
     companion object {
-        fun parsePayload(payloadString: String): ConsoleEntry {
-            return try {
+        fun parsePayload(payloadString: String): List<ConsoleEntry> {
+            val entries = mutableListOf<ConsoleEntry>()
+            try {
                 val outer = JSONObject(payloadString)
                 val state = outer.optString("state", "")
 
+                // 1. Check for logs
+                val logsArray = outer.optJSONArray("logs")
+                if (logsArray != null) {
+                    for (i in 0 until logsArray.length()) {
+                        val logStr = logsArray.optString(i, null)
+                        if (logStr != null) {
+                            entries.add(Log(rawResult = parseJsResult(logStr)))
+                        }
+                    }
+                }
+
+                // 2. Check for error or result
                 if (state == "error") {
                     val msg = outer.optString("msg", "Unknown error")
                     val stack = outer.optString("stack", null)
-                    Error(message = msg, stack = stack)
+                    entries.add(Error(message = msg, stack = stack))
                 } else {
                     val resString = outer.optString("res", null)
                     if (resString != null) {
-                        Output(rawResult = parseJsResult(resString))
-                    } else {
-                        Output(rawResult = outer)
+                        entries.add(Output(rawResult = parseJsResult(resString)))
+                    } else if (!outer.has("logs")) {
+                        // If no res and no logs, just output the whole object (unless it's just a log container)
+                        entries.add(Output(rawResult = outer))
                     }
                 }
             } catch (e: Exception) {
-                Output(rawResult = payloadString)
+                entries.add(Output(rawResult = payloadString))
             }
+            return entries
         }
 
         private fun parseJsResult(res: String): Any? {

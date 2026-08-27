@@ -36,7 +36,6 @@ fun ModuleCompatibilityScreen(
     var customInput by remember { mutableStateOf("") }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("VelaJS Module Tester") }) },
         modifier = modifier
     ) { innerPadding ->
         Column(
@@ -46,19 +45,19 @@ fun ModuleCompatibilityScreen(
                 .background(DevToolsBg)
                 .imePadding()
         ) {
-            // Header Bar
+            // --- Header ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp),
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Target Modules",
-                    color = Color.White,
+                    text = "Modules",
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    color = Color.White
                 )
 
                 Button(

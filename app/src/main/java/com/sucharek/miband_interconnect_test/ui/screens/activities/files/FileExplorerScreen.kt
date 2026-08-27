@@ -30,19 +30,6 @@ fun FileExplorerScreen(
     val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Watch Storage") },
-                actions = {
-                    IconButton(
-                        onClick = { viewModel.refresh() },
-                        enabled = !isLoading
-                    ) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                    }
-                }
-            )
-        },
         modifier = modifier
     ) { innerPadding ->
         Column(
@@ -50,6 +37,26 @@ fun FileExplorerScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // --- Header ---
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Files",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                IconButton(
+                    onClick = { viewModel.refresh() },
+                    enabled = !isLoading
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                }
+            }
+
             // Breadcrumbs
             Breadcrumbs(
                 path = currentPath,
