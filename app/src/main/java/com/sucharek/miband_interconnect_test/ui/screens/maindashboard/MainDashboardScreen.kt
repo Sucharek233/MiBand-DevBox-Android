@@ -177,14 +177,10 @@ private fun DashboardCategoryCard(
     isLuaActive: Boolean,
     onNavigate: (Screen) -> Unit
 ) {
-    val isLuaRestricted = category.serviceType == ServiceType.LUA &&
-            category != DashboardCategory.PING &&
-            !isLuaActive
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = !isLuaRestricted) {
+            .clickable {
                 when (category) {
                     DashboardCategory.TERMINAL -> onNavigate(Screen.RemoteTerminal)
                     DashboardCategory.LUASHELL -> onNavigate(Screen.LuaShell)
@@ -193,14 +189,13 @@ private fun DashboardCategoryCard(
                     DashboardCategory.QJS -> onNavigate(Screen.QjsShell)
                     DashboardCategory.MODULES -> onNavigate(Screen.ModuleCompatibility)
                     DashboardCategory.SENSORS -> onNavigate(Screen.Sensors)
+                    DashboardCategory.LUASENSORS -> onNavigate(Screen.LuaSensors)
                 }
             },
         colors = CardDefaults.cardColors(
-            containerColor = if (isLuaRestricted)
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            else MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isLuaRestricted) 0.dp else 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
@@ -211,29 +206,16 @@ private fun DashboardCategoryCard(
                 Text(
                     text = category.title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = if (isLuaRestricted)
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                    else MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
-
-                if (isLuaRestricted) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = if (isLuaRestricted) "Perform a Ping first" else category.description,
+                text = category.description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (isLuaRestricted)
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                else MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

@@ -21,6 +21,7 @@ enum class DashboardCategory(
     TERMINAL("Terminal", "Send custom commands", ServiceType.LUA),
     LUASHELL("Lua Shell", "Run custom Lua code", ServiceType.LUA),
     FILES("File Explorer", "Explore the filesystem", ServiceType.LUA),
+    LUASENSORS("Lua Sensors", "Stream sensor data (Lua)", ServiceType.LUA),
     
     // QuickJS Service
     QJS("VelaJS Shell", "Run custom Javascript code", ServiceType.QUICKJS),

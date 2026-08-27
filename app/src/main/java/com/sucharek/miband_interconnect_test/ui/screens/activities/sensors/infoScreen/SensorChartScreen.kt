@@ -62,14 +62,14 @@ import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
 import com.patrykandpatrick.vico.compose.common.Fill
 import com.sucharek.miband_interconnect_test.ui.screens.activities.sensors.SensorSample
-import com.sucharek.miband_interconnect_test.ui.screens.activities.sensors.SensorViewModel
+import com.sucharek.miband_interconnect_test.ui.screens.activities.sensors.BaseSensorViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.sensors.SubscriptionState
 import com.sucharek.miband_interconnect_test.ui.screens.activities.sensors.StreamStatusChip
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SensorChartScreen(
-    viewModel: SensorViewModel,
+    viewModel: BaseSensorViewModel,
     sensorName: String,
     onBack: () -> Unit
 ) {

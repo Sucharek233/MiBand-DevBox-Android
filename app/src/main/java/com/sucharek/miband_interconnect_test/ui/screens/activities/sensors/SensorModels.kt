@@ -30,3 +30,10 @@ data class SensorSample(
     val values: Map<String, Double>,
     val timestamp: Long = System.currentTimeMillis()
 )
+
+interface BaseSensorViewModel {
+    val subscriptionState: kotlinx.coroutines.flow.StateFlow<SubscriptionState>
+    val incomingSamples: kotlinx.coroutines.flow.StateFlow<List<SensorSample>>
+    val lastError: kotlinx.coroutines.flow.StateFlow<Pair<String, String?>?>
+    fun unsubscribeCurrent()
+}

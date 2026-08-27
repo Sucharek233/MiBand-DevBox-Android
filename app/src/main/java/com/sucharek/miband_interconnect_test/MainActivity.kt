@@ -22,6 +22,8 @@ import com.sucharek.miband_interconnect_test.ui.screens.activities.files.FileExp
 import com.sucharek.miband_interconnect_test.ui.screens.activities.files.FileExplorerViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.luashell.LuaShellScreen
 import com.sucharek.miband_interconnect_test.ui.screens.activities.luashell.LuaShellViewModel
+import com.sucharek.miband_interconnect_test.ui.screens.activities.luaSensors.LuaSensorScreen
+import com.sucharek.miband_interconnect_test.ui.screens.activities.luaSensors.LuaSensorViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.moduleCompatibility.ModuleCompatibilityScreen
 import com.sucharek.miband_interconnect_test.ui.screens.activities.moduleCompatibility.ModuleCompatibilityViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.ping.PingScreen
@@ -141,6 +143,33 @@ class MainActivity : ComponentActivity() {
                                 onSensorClick = { sensorName ->
                                     navController.navigate(Screen.SensorChart(sensorName))
                                 }
+                            )
+                        }
+
+                        composable<Screen.LuaSensors> {
+                            val activity = LocalActivity.current as ComponentActivity
+                            val sensorsViewModel: LuaSensorViewModel = viewModel(viewModelStoreOwner = activity) {
+                                LuaSensorViewModel(watchViewModel)
+                            }
+                            LuaSensorScreen(
+                                viewModel = sensorsViewModel,
+                                onBack = { navController.popBackStack() },
+                                onSensorSubscribed = { sensorName ->
+                                    navController.navigate(Screen.LuaSensorChart(sensorName))
+                                }
+                            )
+                        }
+
+                        composable<Screen.LuaSensorChart> { backStackEntry ->
+                            val sensorChart = backStackEntry.toRoute<Screen.LuaSensorChart>()
+                            val activity = LocalActivity.current as ComponentActivity
+                            val sensorsViewModel: LuaSensorViewModel = viewModel(viewModelStoreOwner = activity) {
+                                LuaSensorViewModel(watchViewModel)
+                            }
+                            SensorChartScreen(
+                                viewModel = sensorsViewModel,
+                                sensorName = sensorChart.sensorName,
+                                onBack = { navController.popBackStack() }
                             )
                         }
 

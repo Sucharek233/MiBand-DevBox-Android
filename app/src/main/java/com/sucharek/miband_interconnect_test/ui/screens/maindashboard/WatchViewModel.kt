@@ -64,6 +64,10 @@ class WatchViewModel(
     private val _sensorMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
     val sensorMessages: SharedFlow<String> = _sensorMessages.asSharedFlow()
 
+    // Lua Sensors
+    private val _luaSensorsMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
+    val luaSensorsMessages: SharedFlow<String> = _luaSensorsMessages.asSharedFlow()
+
     // Ping
     private val _pingMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
     val pingMessages: SharedFlow<String> = _pingMessages.asSharedFlow()
@@ -200,6 +204,7 @@ class WatchViewModel(
                     "qjs" -> _qjsMessages.emit(message)
                     "modules" -> _modulesMessages.emit(message)
                     "sensors" -> _sensorMessages.emit(message)
+                    "sensorsLua" -> _luaSensorsMessages.emit(message)
                     else -> {
                         // for now keep other messages in terminal log
                         _terminalMessages.emit("RECV: $message")

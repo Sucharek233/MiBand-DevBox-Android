@@ -12,7 +12,7 @@ import org.json.JSONObject
 
 class SensorViewModel(
     private val globalWatchViewModel: WatchViewModel
-) : ViewModel() {
+) : ViewModel(), BaseSensorViewModel {
 
     // 1. Discovery State
     private val _isDiscovering = MutableStateFlow(false)
@@ -30,13 +30,13 @@ class SensorViewModel(
     val activeSensor: StateFlow<String?> = _activeSensor.asStateFlow()
 
     private val _subscriptionState = MutableStateFlow(SubscriptionState.DISCONNECTED)
-    val subscriptionState: StateFlow<SubscriptionState> = _subscriptionState.asStateFlow()
+    override val subscriptionState: StateFlow<SubscriptionState> = _subscriptionState.asStateFlow()
 
     private val _lastError = MutableStateFlow<Pair<String, String?>?>(null) // Pair(msg, stack)
-    val lastError: StateFlow<Pair<String, String?>?> = _lastError.asStateFlow()
+    override val lastError: StateFlow<Pair<String, String?>?> = _lastError.asStateFlow()
 
     private val _incomingSamples = MutableStateFlow<List<SensorSample>>(emptyList())
-    val incomingSamples: StateFlow<List<SensorSample>> = _incomingSamples.asStateFlow()
+    override val incomingSamples: StateFlow<List<SensorSample>> = _incomingSamples.asStateFlow()
 
     private var scanJob: Job? = null
 
@@ -97,7 +97,7 @@ class SensorViewModel(
         )
     }
 
-    fun unsubscribeCurrent() {
+    override fun unsubscribeCurrent() {
         val current = _activeSensor.value
         println("[SensorStream] <--- UNSUBSCRIBING FROM: $current")
 
