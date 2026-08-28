@@ -7,15 +7,12 @@ import com.sucharek.miband_interconnect_test.interconnect.DeviceManager
 import com.sucharek.miband_interconnect_test.interconnect.Messages
 import com.sucharek.miband_interconnect_test.interconnect.Subscriptions
 import com.sucharek.miband_interconnect_test.ui.screens.activities.apps.AppsRepository
+import com.sucharek.miband_interconnect_test.models.LogType
+import com.sucharek.miband_interconnect_test.models.SystemLogEntry
 import com.xiaomi.xms.wearable.node.DataItem
 import com.xiaomi.xms.wearable.node.DataSubscribeResult
 import com.xiaomi.xms.wearable.node.Node
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
@@ -89,6 +86,9 @@ class WatchViewModel(
     private val _systemMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
     val systemMessages: SharedFlow<String> = _systemMessages.asSharedFlow()
 
+    private val _systemLogEntries = MutableStateFlow<List<SystemLogEntry>>(emptyList())
+    val systemLogEntries: StateFlow<List<SystemLogEntry>> = _systemLogEntries.asStateFlow()
+
     // Mailbox Busy Events
     private val _mailboxBusyEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val mailboxBusyEvents: SharedFlow<Unit> = _mailboxBusyEvents.asSharedFlow()
@@ -100,6 +100,14 @@ class WatchViewModel(
 
     var subscriptionsEngine: Subscriptions? = null
         private set
+
+    init {
+        viewModelScope.launch {
+            systemMessages.collectLatest { rawMessage ->
+                parseAndAddLog(rawMessage)
+            }
+        }
+    }
 
     fun refreshDevices() {
         viewModelScope.launch {
@@ -202,6 +210,7 @@ class WatchViewModel(
         val message = String(rawMessage)
         println(message)
         viewModelScope.launch {
+            _systemMessages.emit("RECV: $message")
             try {
                 val json = JSONObject(message)
                 val type = json.optString("type")
@@ -255,6 +264,7 @@ class WatchViewModel(
     fun sendMessage(text: String) {
         println("Sending message: $text")
         viewModelScope.launch {
+            _systemMessages.emit("SENT: $text")
             try {
                 messagesEngine?.sendMessage(text)
             } catch (e: Exception) {
@@ -265,6 +275,7 @@ class WatchViewModel(
 
     fun sendRawMessage(byteArray: ByteArray) {
         viewModelScope.launch {
+            _systemMessages.emit("SENT: [Raw Data ${byteArray.size} bytes]")
             try {
                 messagesEngine?.sendRawMessage(byteArray)
             } catch (e: Exception) {
@@ -286,6 +297,109 @@ class WatchViewModel(
                 _systemMessages.emit("LOCAL ERROR: Envelope packaging aborted due to exception")
             }
         }
+    }
+
+    fun clearLogs() {
+        _systemLogEntries.value = emptyList()
+    }
+
+    private fun parseAndAddLog(rawMessage: String) {
+        val entry = try {
+            if (rawMessage.startsWith("SENT:") || rawMessage.startsWith("RECV:")) {
+                val isSent = rawMessage.startsWith("SENT:")
+                val jsonStr = rawMessage.substring(5).trim()
+                val type = if (isSent) LogType.SENT else LogType.RECV
+
+                if (jsonStr.startsWith("{")) {
+                    val json = JSONObject(jsonStr)
+                    val msgType = json.optString("type", "unknown")
+                    val state = json.optString("state", "")
+
+                    // Create a short summary for the message
+                    val summary = if (isSent) {
+                        "Sent $msgType"
+                    } else {
+                        when (state) {
+                            "error" -> "Error in $msgType"
+                            "stream" -> "Stream $msgType"
+                            else -> "Recv $msgType"
+                        }
+                    }
+
+                    val finalType = if (!isSent && state == "error") LogType.LOCAL_ERROR else type
+
+                    SystemLogEntry(
+                        message = summary,
+                        stack = if (json.has("stack")) json.optString("stack") else null,
+                        type = finalType,
+                        raw = jsonStr,
+                        isStream = !isSent && state == "stream"
+                    )
+                } else {
+                    SystemLogEntry(
+                        message = if (isSent) "Sent Raw" else "Recv Raw",
+                        type = type,
+                        raw = jsonStr
+                    )
+                }
+            } else if (rawMessage.startsWith("{")) {
+                val json = JSONObject(rawMessage)
+                val type = json.optString("type")
+
+                if (type == "interconnect") {
+                    SystemLogEntry(
+                        message = json.optString("msg").ifEmpty { json.optString("message", "Unknown Error") },
+                        stack = if (json.has("stack")) json.optString("stack") else null,
+                        type = LogType.INTERCONNECT,
+                        raw = rawMessage
+                    )
+                } else if (json.optString("state") == "error") {
+                    val errorType = when (type) {
+                        "luashell" -> LogType.LUA_ERROR
+                        "qjs" -> LogType.JS_ERROR
+                        else -> LogType.SYSTEM
+                    }
+                    SystemLogEntry(
+                        message = json.optString("msg").ifEmpty { json.optString("message", "Unknown Error") },
+                        stack = if (json.has("stack")) json.optString("stack") else null,
+                        type = errorType,
+                        raw = rawMessage
+                    )
+                } else {
+                    SystemLogEntry(
+                        message = "JSON Message ($type)",
+                        type = LogType.SYSTEM,
+                        raw = rawMessage
+                    )
+                }
+            } else if (rawMessage.startsWith("LOCAL ERROR:")) {
+                SystemLogEntry(
+                    message = rawMessage.removePrefix("LOCAL ERROR:").trim(),
+                    type = LogType.LOCAL_ERROR,
+                    raw = rawMessage
+                )
+            } else if (rawMessage.startsWith("SYSTEM:")) {
+                SystemLogEntry(
+                    message = rawMessage.removePrefix("SYSTEM:").trim(),
+                    type = LogType.SYSTEM,
+                    raw = rawMessage
+                )
+            } else {
+                SystemLogEntry(
+                    message = rawMessage,
+                    type = LogType.UNKNOWN,
+                    raw = rawMessage
+                )
+            }
+        } catch (e: Exception) {
+            SystemLogEntry(
+                message = "Failed to parse log",
+                type = LogType.LOCAL_ERROR,
+                raw = rawMessage
+            )
+        }
+
+        _systemLogEntries.value = (_systemLogEntries.value + entry).takeLast(500)
     }
 
     override fun onCleared() {

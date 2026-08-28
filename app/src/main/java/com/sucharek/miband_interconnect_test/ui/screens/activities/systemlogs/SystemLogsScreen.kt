@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sucharek.miband_interconnect_test.models.LogType
+import com.sucharek.miband_interconnect_test.models.SystemLogEntry
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -80,13 +82,15 @@ private fun SystemLogItem(log: SystemLogEntry) {
     var expanded by remember { mutableStateOf(false) }
     val timeFormat = remember { SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()) }
     
-    val color = when (log.type) {
-        LogType.SYSTEM -> MaterialTheme.colorScheme.primary
-        LogType.INTERCONNECT -> MaterialTheme.colorScheme.error
-        LogType.LUA_ERROR -> Color(0xFFE91E63) // Distinctive pink for Lua
-        LogType.JS_ERROR -> Color(0xFFFF9800) // Distinctive orange for JS
-        LogType.LOCAL_ERROR -> MaterialTheme.colorScheme.error
-        LogType.UNKNOWN -> MaterialTheme.colorScheme.secondary
+    val color = when {
+        log.type == LogType.LOCAL_ERROR || log.type == LogType.INTERCONNECT -> MaterialTheme.colorScheme.error
+        log.isStream -> Color(0xFFFFEB3B) // Yellow for streams
+        log.type == LogType.SENT -> Color(0xFF4CAF50)
+        log.type == LogType.RECV -> Color(0xFF2196F3)
+        log.type == LogType.LUA_ERROR -> Color(0xFFE91E63)
+        log.type == LogType.JS_ERROR -> Color(0xFFFF9800)
+        log.type == LogType.SYSTEM -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.secondary
     }
 
     Card(
@@ -124,7 +128,7 @@ private fun SystemLogItem(log: SystemLogEntry) {
             Spacer(modifier = Modifier.height(4.dp))
             
             Text(
-                text = "${log.type.name} • ${timeFormat.format(Date(log.timestamp))}",
+                text = "${log.type.name}${if (log.isStream) " (STREAM)" else ""} • ${timeFormat.format(Date(log.timestamp))}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -155,9 +159,11 @@ private fun SystemLogItem(log: SystemLogEntry) {
                     }
                     
                     if (log.raw != null && log.raw != log.message) {
+                        val displayRaw = if (log.raw.length > 200) log.raw.take(200) + "..." else log.raw
+                        
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Raw Message:",
+                            text = "Raw Message (Truncated):",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
                         )
@@ -167,7 +173,7 @@ private fun SystemLogItem(log: SystemLogEntry) {
                             modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                         ) {
                             Text(
-                                text = log.raw,
+                                text = displayRaw,
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontFamily = FontFamily.Monospace,
                                     fontSize = 11.sp
