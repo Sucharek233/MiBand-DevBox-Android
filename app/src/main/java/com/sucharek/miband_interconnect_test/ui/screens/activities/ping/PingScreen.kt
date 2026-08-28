@@ -24,16 +24,19 @@ import java.util.Locale
 @Composable
 fun PingScreen(
     viewModel: PingViewModel,
+    initialType: String? = null,
     onBack: () -> Unit
 ) {
     val pings by viewModel.pings.collectAsState()
     val isPinging by viewModel.isPinging.collectAsState()
     val listState = rememberLazyListState()
 
+    var selectedPingType by remember { mutableStateOf(initialType ?: "lua") }
+
     // Scroll to the latest ping whenever a new one is added OR an existing one is updated (e.g. finishes)
     LaunchedEffect(pings) {
         if (pings.isNotEmpty()) {
-            listState.animateScrollToItem(pings.size - 1)
+            listState.animateScrollToItem(0)
         }
     }
 
@@ -60,7 +63,7 @@ fun PingScreen(
                 )
 
                 Button(
-                    onClick = { viewModel.sendPing() },
+                    onClick = { viewModel.sendPing(selectedPingType) },
                     enabled = !isPinging,
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                     modifier = Modifier.height(36.dp)
@@ -71,10 +74,23 @@ fun PingScreen(
                 }
             }
 
+            TabRow(selectedTabIndex = if (selectedPingType == "qjs") 0 else 1) {
+                Tab(
+                    selected = selectedPingType == "qjs",
+                    onClick = { selectedPingType = "qjs" },
+                    text = { Text("QuickJS") }
+                )
+                Tab(
+                    selected = selectedPingType == "lua",
+                    onClick = { selectedPingType = "lua" },
+                    text = { Text("Lua") }
+                )
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp)
+                    .padding(16.dp)
             ) {
                 Text(
                     text = "History",
@@ -88,13 +104,16 @@ fun PingScreen(
                         Text("No data recorded", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 } else {
+                    val filteredPings = remember(pings, selectedPingType) {
+                        pings.filter { it.type == selectedPingType }
+                    }
+                    
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        reverseLayout = true
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(pings) { ping ->
+                        items(filteredPings.reversed()) { ping ->
                             PingHistoryItem(ping)
                         }
                     }
@@ -128,12 +147,18 @@ private fun PingHistoryItem(ping: PingResult) {
                         .background(statusColor, RoundedCornerShape(5.dp))
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = if (ping.status == PingStatus.PENDING) "Pinging..." else "Ping #${ping.id}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (ping.status == PingStatus.PENDING) "Pinging..." else "Ping #${ping.id}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = ping.type.uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
                 Text(
                     text = String.format(Locale.US, "%tT", ping.androidStartTime),
                     style = MaterialTheme.typography.labelSmall,
@@ -143,27 +168,39 @@ private fun PingHistoryItem(ping: PingResult) {
 
             if (ping.status == PingStatus.SUCCESS) {
                 Spacer(modifier = Modifier.height(8.dp))
-                
-                TimingRow("QuickJS acknowledge", ping.qjsAckTime)
-                TimingRow("Lua acknowledge", ping.luaAckTime)
-                TimingRow("Received", ping.receivedTime)
-                
+
+                val totalRtt = if (ping.androidEndTime != null) ping.androidEndTime - ping.androidStartTime else 0L
+
+                if (ping.type == "lua") {
+                    val processing = if (ping.watchEndTime != null && ping.watchStartTime != null)
+                        ping.watchEndTime - ping.watchStartTime else 0L
+                    
+                    val networkTime = (totalRtt - processing).coerceAtLeast(0L)
+                    val estLatency = networkTime / 2
+
+                    TimingRow("Watch processing", processing)
+                    TimingRow("Est. One-way Latency", estLatency)
+                } else {
+                    val estLatency = totalRtt / 2
+                    TimingRow("Est. One-way Latency", estLatency)
+                }
+
                 HorizontalDivider(
                     modifier = Modifier.padding(vertical = 4.dp),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                 )
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Total",
+                        text = "Round-trip (Total)",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "${ping.androidTotalTime} ms",
+                        text = "$totalRtt ms",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace

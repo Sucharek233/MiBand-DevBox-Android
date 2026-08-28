@@ -53,5 +53,5 @@ sealed interface Screen {
     data class SensorChart(val sensorName: String) : Screen
 
     @Serializable
-    object Ping : Screen
+    data class Ping(val initialType: String? = null) : Screen
 }

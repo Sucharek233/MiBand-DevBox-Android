@@ -16,11 +16,12 @@ enum class PingStatus {
 
 data class PingResult(
     val id: Long,
+    val type: String,
     val androidStartTime: Long,
-    val qjsAckTime: Long? = null,
-    val luaAckTime: Long? = null,
-    val receivedTime: Long? = null,
-    val androidTotalTime: Long? = null,
+    val watchStartTime: Long? = null,
+    val watchEndTime: Long? = null,
+    val watchAckTime: Long? = null,
+    val androidEndTime: Long? = null,
     val status: PingStatus = PingStatus.PENDING,
     val errorMsg: String? = null
 )
@@ -33,7 +34,7 @@ class PingViewModel(
     val pings: StateFlow<List<PingResult>> = _pings.asStateFlow()
 
     private val _isPinging = MutableStateFlow(false)
-    val isPinging: StateFlow<Boolean> = _isPinging.asStateFlow()
+    val isPinging: StateFlow<Boolean> = _isPinging.asPingingStateFlow()
 
     private var nextId = 0L
 
@@ -45,19 +46,22 @@ class PingViewModel(
         }
     }
 
-    fun sendPing() {
+    private fun StateFlow<Boolean>.asPingingStateFlow(): StateFlow<Boolean> = this
+
+    fun sendPing(type: String) {
         if (_isPinging.value) return
 
         val id = nextId++
         val newPing = PingResult(
             id = id,
+            type = type,
             androidStartTime = System.currentTimeMillis()
         )
 
         _pings.value = (_pings.value + newPing).takeLast(50)
         _isPinging.value = true
         
-        watchViewModel.pingDevice()
+        watchViewModel.pingDevice(type)
     }
 
     private fun handlePingResponse(rawJson: String) {
@@ -73,10 +77,10 @@ class PingViewModel(
                 val updated = when (state) {
                     "done" -> pending.copy(
                         status = PingStatus.SUCCESS,
-                        qjsAckTime = if (json.has("startTime")) json.optLong("startTime") else null,
-                        luaAckTime = json.optLong("ackTime"),
-                        receivedTime = json.optLong("totalTime"),
-                        androidTotalTime = System.currentTimeMillis() - pending.androidStartTime
+                        watchStartTime = if (json.has("startTime")) json.optLong("startTime") else null,
+                        watchEndTime = if (json.has("endTime")) json.optLong("endTime") else null,
+                        watchAckTime = if (json.has("ackTime")) json.optLong("ackTime") else null,
+                        androidEndTime = System.currentTimeMillis()
                     )
                     "timeout" -> pending.copy(status = PingStatus.TIMEOUT)
                     else -> pending.copy(status = PingStatus.ERROR, errorMsg = json.optString("msg"))

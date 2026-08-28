@@ -261,13 +261,15 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
-                            composable<Screen.Ping> {
+                            composable<Screen.Ping> { backStackEntry ->
+                                val pingRoute = backStackEntry.toRoute<Screen.Ping>()
                                 val activity = LocalActivity.current as ComponentActivity
                                 val pingViewModel: PingViewModel = viewModel(viewModelStoreOwner = activity) {
                                     PingViewModel(watchViewModel)
                                 }
                                 PingScreen(
                                     viewModel = pingViewModel,
+                                    initialType = pingRoute.initialType,
                                     onBack = { navController.popBackStack() }
                                 )
                             }

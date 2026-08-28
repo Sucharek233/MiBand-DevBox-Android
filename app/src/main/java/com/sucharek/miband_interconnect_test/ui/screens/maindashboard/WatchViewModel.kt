@@ -167,10 +167,10 @@ class WatchViewModel(
         }
     }
 
-    fun pingDevice() {
+    fun pingDevice(type: String) {
         viewModelScope.launch {
             try {
-                sendStructuredMessage("ping")
+                sendStructuredMessage("ping", JSONObject().apply { put("type", type) })
             } catch (e: Exception) {
                 _systemMessages.emit("Failed to send Ping")
             }

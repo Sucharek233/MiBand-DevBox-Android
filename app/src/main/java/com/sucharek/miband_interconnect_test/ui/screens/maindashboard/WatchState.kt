@@ -26,12 +26,14 @@ enum class ServiceType(val title: String) {
 enum class DashboardCategory(
     val title: String, 
     val description: String, 
-    val serviceType: ServiceType,
+    val serviceType: ServiceType?, 
     val icon: ImageVector
 ) {
+    // Shared / Management
+    PING("Ping", "Test connection latency", null, Icons.Default.Speed),
+    SYSTEMLOGS("System Logs", "View global errors and events", null, Icons.Default.BugReport),
+
     // Lua Service
-    PING("Ping", "Test connection latency", ServiceType.LUA, Icons.Default.Speed),
-    SYSTEMLOGS("System Logs", "View global errors and events", ServiceType.LUA, Icons.Default.BugReport),
     TERMINAL("Terminal", "Send custom commands", ServiceType.LUA, Icons.Default.Terminal),
     LUASHELL("Lua Shell", "Run custom Lua code", ServiceType.LUA, Icons.Default.Code),
     FILES("File Explorer", "Explore the filesystem", ServiceType.LUA, Icons.Default.Folder),

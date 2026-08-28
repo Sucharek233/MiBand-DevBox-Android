@@ -144,23 +144,48 @@ fun MainDashboardScreen(
                 }
             }
 
-            Text(
-                text = selectedService.title,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            val categories = remember(selectedService) {
-                DashboardCategory.entries.filter { it.serviceType == selectedService || it == DashboardCategory.SYSTEMLOGS }
+            val commonCategories = remember {
+                DashboardCategory.entries.filter { it.serviceType == null }
+            }
+            val serviceCategories = remember(selectedService) {
+                DashboardCategory.entries.filter { it.serviceType == selectedService }
             }
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(categories) { category ->
+                item {
+                    Text(
+                        text = "Management",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+
+                items(commonCategories) { category ->
                     DashboardCategoryCard(
                         category = category,
+                        selectedService = selectedService,
+                        onNavigate = onNavigateToCategory
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = selectedService.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+
+                items(serviceCategories) { category ->
+                    DashboardCategoryCard(
+                        category = category,
+                        selectedService = selectedService,
                         onNavigate = onNavigateToCategory
                     )
                 }
@@ -172,6 +197,7 @@ fun MainDashboardScreen(
 @Composable
 private fun DashboardCategoryCard(
     category: DashboardCategory,
+    selectedService: ServiceType,
     onNavigate: (Screen) -> Unit
 ) {
     Card(
@@ -182,7 +208,7 @@ private fun DashboardCategoryCard(
                     DashboardCategory.TERMINAL -> onNavigate(Screen.RemoteTerminal)
                     DashboardCategory.LUASHELL -> onNavigate(Screen.LuaShell)
                     DashboardCategory.FILES -> onNavigate(Screen.FileExplorer())
-                    DashboardCategory.PING -> onNavigate(Screen.Ping)
+                    DashboardCategory.PING -> onNavigate(Screen.Ping(initialType = if (selectedService == ServiceType.QUICKJS) "qjs" else "lua"))
                     DashboardCategory.QJS -> onNavigate(Screen.QjsShell)
                     DashboardCategory.MODULES -> onNavigate(Screen.ModuleCompatibility)
                     DashboardCategory.DEVICE -> onNavigate(Screen.DeviceInfo)
