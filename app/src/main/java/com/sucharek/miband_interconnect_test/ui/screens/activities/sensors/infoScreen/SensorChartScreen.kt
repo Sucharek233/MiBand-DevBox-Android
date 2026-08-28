@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,9 +82,13 @@ fun SensorChartScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Chart", "Raw Data")
 
+    val currentSubscriptionState = rememberUpdatedState(subscriptionState)
+
     DisposableEffect(Unit) {
         onDispose {
-            viewModel.unsubscribeCurrent()
+            if (currentSubscriptionState.value != SubscriptionState.ERROR) {
+                viewModel.unsubscribeCurrent()
+            }
         }
     }
 

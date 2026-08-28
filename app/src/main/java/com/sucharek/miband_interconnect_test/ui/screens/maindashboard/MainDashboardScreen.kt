@@ -145,13 +145,12 @@ fun MainDashboardScreen(
             }
 
             Text(
-                text = "${selectedService.title} Workspaces",
+                text = selectedService.title,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            // 2. Beautiful Category List
-            val categories = remember(selectedService) { 
+            val categories = remember(selectedService) {
                 DashboardCategory.entries.filter { it.serviceType == selectedService || it == DashboardCategory.SYSTEMLOGS }
             }
 

@@ -58,6 +58,15 @@ class LuaSensorViewModel(
     private val _sliderValue = MutableStateFlow(0f)
     val sliderValue: StateFlow<Float> = _sliderValue.asStateFlow()
 
+    // UI Persistence
+    private val _selectedTabIndex = MutableStateFlow(0)
+    val selectedTabIndex: StateFlow<Int> = _selectedTabIndex.asStateFlow()
+
+    var predefinedScrollIndex = 0
+    var predefinedScrollOffset = 0
+    var allScrollIndex = 0
+    var allScrollOffset = 0
+
     private var discoveryPhase = 0 // 0: Idle, 1: listPre, 2: list
 
     init {
@@ -94,6 +103,10 @@ class LuaSensorViewModel(
     fun setSliderValue(value: Float) {
         _sliderValue.value = value
         _period.value = sliderToPeriod(value)
+    }
+
+    fun setSelectedTabIndex(index: Int) {
+        _selectedTabIndex.value = index
     }
 
     private fun sliderToPeriod(value: Float): Int {

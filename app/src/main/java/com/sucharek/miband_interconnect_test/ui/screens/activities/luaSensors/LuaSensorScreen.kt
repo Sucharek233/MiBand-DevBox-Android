@@ -5,7 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -15,6 +17,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,8 +50,25 @@ fun LuaSensorScreen(
     val useKnown by viewModel.useKnown.collectAsState()
     val period by viewModel.period.collectAsState()
     val sliderValue by viewModel.sliderValue.collectAsState()
+    val selectedTabIndex by viewModel.selectedTabIndex.collectAsState()
+    
+    val predefinedListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = viewModel.predefinedScrollIndex,
+        initialFirstVisibleItemScrollOffset = viewModel.predefinedScrollOffset
+    )
+    val allListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = viewModel.allScrollIndex,
+        initialFirstVisibleItemScrollOffset = viewModel.allScrollOffset
+    )
 
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.predefinedScrollIndex = predefinedListState.firstVisibleItemIndex
+            viewModel.predefinedScrollOffset = predefinedListState.firstVisibleItemScrollOffset
+            viewModel.allScrollIndex = allListState.firstVisibleItemIndex
+            viewModel.allScrollOffset = allListState.firstVisibleItemScrollOffset
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -110,12 +130,12 @@ fun LuaSensorScreen(
             TabRow(selectedTabIndex = selectedTabIndex) {
                 Tab(
                     selected = selectedTabIndex == 0,
-                    onClick = { selectedTabIndex = 0 },
+                    onClick = { viewModel.setSelectedTabIndex(0) },
                     text = { Text("Predefined") }
                 )
                 Tab(
                     selected = selectedTabIndex == 1,
-                    onClick = { selectedTabIndex = 1 },
+                    onClick = { viewModel.setSelectedTabIndex(1) },
                     text = { Text("All") }
                 )
             }
@@ -143,9 +163,14 @@ fun LuaSensorScreen(
                 }
             }
 
-            val displayList = if (selectedTabIndex == 0) predefinedSensors else allSensors
+            val (displayList, currentListState) = if (selectedTabIndex == 0) {
+                predefinedSensors to predefinedListState
+            } else {
+                allSensors to allListState
+            }
 
             LazyColumn(
+                state = currentListState,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.weight(1f).padding(horizontal = 16.dp)
             ) {

@@ -38,6 +38,10 @@ class SensorViewModel(
     private val _incomingSamples = MutableStateFlow<List<SensorSample>>(emptyList())
     override val incomingSamples: StateFlow<List<SensorSample>> = _incomingSamples.asStateFlow()
 
+    // UI Persistence
+    var scrollIndex = 0
+    var scrollOffset = 0
+
     private var scanJob: Job? = null
 
     init {
@@ -59,8 +63,7 @@ class SensorViewModel(
     fun discoverSensors() {
         scanJob?.cancel()
         scanJob = viewModelScope.launch {
-//            _isDiscovering.value = true
-//            _scanProgress.value = 0f
+            _isDiscovering.value = true
 
             val payload = JSONObject().apply {
                 put("req", "listLite")
@@ -69,19 +72,6 @@ class SensorViewModel(
                 type = "sensors",
                 args = payload
             )
-
-//             Smooth 15-second fake progress bar timer
-//            val totalDurationMs = 15_000L
-//            val stepMs = 100L
-//            val steps = totalDurationMs / stepMs
-//
-//            for (i in 1..steps) {
-//                if (!_isDiscovering.value) break // Stop if response comes earlier
-//                delay(stepMs)
-//                _scanProgress.value = i.toFloat() / steps
-//            }
-//
-//            _isDiscovering.value = false
         }
     }
 

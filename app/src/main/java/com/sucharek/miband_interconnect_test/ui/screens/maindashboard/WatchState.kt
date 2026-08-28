@@ -31,13 +31,13 @@ enum class DashboardCategory(
 ) {
     // Lua Service
     PING("Ping", "Test connection latency", ServiceType.LUA, Icons.Default.Speed),
+    SYSTEMLOGS("System Logs", "View global errors and events", ServiceType.LUA, Icons.Default.BugReport),
     TERMINAL("Terminal", "Send custom commands", ServiceType.LUA, Icons.Default.Terminal),
     LUASHELL("Lua Shell", "Run custom Lua code", ServiceType.LUA, Icons.Default.Code),
     FILES("File Explorer", "Explore the filesystem", ServiceType.LUA, Icons.Default.Folder),
-    LUASENSORS("Lua Sensors", "Stream sensor data (Lua)", ServiceType.LUA, Icons.Default.Sensors),
+    LUASENSORS("Lua Sensors", "Stream sensor data", ServiceType.LUA, Icons.Default.Sensors),
     APPS("Apps", "View installed apps", ServiceType.LUA, Icons.Default.Apps),
-    SYSTEMLOGS("System Logs", "View global errors and events", ServiceType.LUA, Icons.Default.BugReport),
-    
+
     // QuickJS Service
     QJS("VelaJS Shell", "Run custom Javascript code", ServiceType.QUICKJS, Icons.Default.Code),
     MODULES("Modules", "Check module compatibility", ServiceType.QUICKJS, Icons.Default.Extension),
