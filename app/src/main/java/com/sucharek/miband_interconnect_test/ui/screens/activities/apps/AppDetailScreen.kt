@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sucharek.miband_interconnect_test.ui.components.PureSyntaxHighlightedCode
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -154,9 +155,10 @@ fun AppDetailScreen(
                                     shape = RoundedCornerShape(4.dp),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text(
-                                        text = json,
-                                        style = MaterialTheme.typography.bodySmall.copy(
+                                    PureSyntaxHighlightedCode(
+                                        code = json,
+                                        language = "json",
+                                        textStyle = MaterialTheme.typography.bodySmall.copy(
                                             fontFamily = FontFamily.Monospace,
                                             fontSize = 10.sp
                                         ),

@@ -83,6 +83,8 @@ private fun SystemLogItem(log: SystemLogEntry) {
     val color = when (log.type) {
         LogType.SYSTEM -> MaterialTheme.colorScheme.primary
         LogType.INTERCONNECT -> MaterialTheme.colorScheme.error
+        LogType.LUA_ERROR -> Color(0xFFE91E63) // Distinctive pink for Lua
+        LogType.JS_ERROR -> Color(0xFFFF9800) // Distinctive orange for JS
         LogType.LOCAL_ERROR -> MaterialTheme.colorScheme.error
         LogType.UNKNOWN -> MaterialTheme.colorScheme.secondary
     }

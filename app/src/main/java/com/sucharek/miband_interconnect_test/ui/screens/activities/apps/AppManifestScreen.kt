@@ -14,11 +14,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.hossain.highlight.ui.ExperimentalHighlightApi
+import dev.hossain.highlight.ui.LocalHighlightTheme
+import dev.hossain.highlight.ui.rememberSyntaxHighlightedEditorValue
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalHighlightApi::class)
 @Composable
 fun AppManifestScreen(
     viewModel: AppManifestViewModel
@@ -27,12 +31,19 @@ fun AppManifestScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val saveStatus by viewModel.saveStatus.collectAsState()
 
-    var editableContent by remember { mutableStateOf(manifestContent) }
+    var editableContent by remember { mutableStateOf(TextFieldValue(manifestContent)) }
     
+    val theme = LocalHighlightTheme.current
+    val displayValue = rememberSyntaxHighlightedEditorValue(
+        value = editableContent,
+        language = "json",
+        theme = theme
+    )
+
     // Update local state when remote content is fetched or loading finishes
     LaunchedEffect(manifestContent, isLoading) {
         if (!isLoading && manifestContent.isNotEmpty()) {
-            editableContent = manifestContent
+            editableContent = TextFieldValue(manifestContent)
         }
     }
 
@@ -81,7 +92,7 @@ fun AppManifestScreen(
 
                     IconButton(
                         onClick = { 
-                            editableContent = "" // Clear local state to allow overwrite by incoming refresh
+                            editableContent = TextFieldValue("") // Clear local state to allow overwrite by incoming refresh
                             viewModel.refresh() 
                         },
                         enabled = !isLoading && !isSaving
@@ -96,8 +107,8 @@ fun AppManifestScreen(
                     Spacer(modifier = Modifier.width(4.dp))
                     
                     Button(
-                        onClick = { viewModel.saveManifest(editableContent) },
-                        enabled = !isLoading && !isSaving && editableContent.isNotEmpty(),
+                        onClick = { viewModel.saveManifest(editableContent.text) },
+                        enabled = !isLoading && !isSaving && editableContent.text.isNotEmpty(),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                         modifier = Modifier.height(36.dp)
                     ) {
@@ -126,7 +137,7 @@ fun AppManifestScreen(
                             .verticalScroll(rememberScrollState())
                     ) {
                         TextField(
-                            value = editableContent,
+                            value = displayValue,
                             onValueChange = { if (!isSaving) editableContent = it },
                             enabled = !isSaving,
                             modifier = Modifier.fillMaxWidth(),

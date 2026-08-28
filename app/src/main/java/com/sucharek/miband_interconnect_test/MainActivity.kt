@@ -6,9 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -80,10 +83,10 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             startDestination = Screen.DeviceSelection,
                             modifier = Modifier.padding(innerPadding),
-                            enterTransition = { fadeIn(animationSpec = tween(200)) },
-                            exitTransition = { fadeOut(animationSpec = tween(200)) },
-                            popEnterTransition = { fadeIn(animationSpec = tween(200)) },
-                            popExitTransition = { fadeOut(animationSpec = tween(200)) }
+                            enterTransition = { fadeIn(animationSpec = tween(150)) },
+                            exitTransition = { fadeOut(animationSpec = tween(150)) },
+                            popEnterTransition = { fadeIn(animationSpec = tween(150)) },
+                            popExitTransition = { fadeOut(animationSpec = tween(150)) }
                         ) {
                             composable<Screen.DeviceSelection> {
                                 DeviceSelectionScreen(

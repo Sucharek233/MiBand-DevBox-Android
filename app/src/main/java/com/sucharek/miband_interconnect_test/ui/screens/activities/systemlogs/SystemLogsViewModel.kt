@@ -38,6 +38,18 @@ class SystemLogsViewModel(
                         type = LogType.INTERCONNECT,
                         raw = rawMessage
                     )
+                } else if (json.optString("state") == "error") {
+                    val errorType = when (type) {
+                        "luashell" -> LogType.LUA_ERROR
+                        "qjs" -> LogType.JS_ERROR
+                        else -> LogType.SYSTEM
+                    }
+                    SystemLogEntry(
+                        message = json.optString("msg").ifEmpty { json.optString("message", "Unknown Error") },
+                        stack = if (json.has("stack")) json.optString("stack") else null,
+                        type = errorType,
+                        raw = rawMessage
+                    )
                 } else {
                     SystemLogEntry(
                         message = "JSON Message ($type)",

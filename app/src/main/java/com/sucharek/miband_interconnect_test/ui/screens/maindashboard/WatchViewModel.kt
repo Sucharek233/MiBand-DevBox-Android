@@ -208,8 +208,13 @@ class WatchViewModel(
                 val state = json.optString("state")
                 val errorMsg = json.optString("msg").ifEmpty { json.optString("message") }
 
-                if (state == "error" && errorMsg.contains("Mailbox")) {
-                    _mailboxBusyEvents.emit(Unit)
+                if (state == "error") {
+                    if (type != "interconnect") {
+                        _systemMessages.emit(message)
+                    }
+                    if (errorMsg.contains("Mailbox")) {
+                        _mailboxBusyEvents.emit(Unit)
+                    }
                 }
 
                 when (type) {

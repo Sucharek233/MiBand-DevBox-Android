@@ -152,7 +152,7 @@ fun MainDashboardScreen(
 
             // 2. Beautiful Category List
             val categories = remember(selectedService) { 
-                DashboardCategory.entries.filter { it.serviceType == selectedService }
+                DashboardCategory.entries.filter { it.serviceType == selectedService || it == DashboardCategory.SYSTEMLOGS }
             }
 
             LazyColumn(

@@ -32,6 +32,7 @@ import dev.hossain.highlight.ui.rememberHighlightEngine
 import dev.hossain.highlight.ui.rememberHighlightedCode
 import dev.hossain.highlight.ui.rememberSyntaxHighlightedEditorValue
 import dev.hossain.highlight.ui.LocalHighlightTheme
+import com.sucharek.miband_interconnect_test.ui.components.PureSyntaxHighlightedCode
 import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.ConsoleEntry
 import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsBg
 import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsDimArrow
@@ -297,27 +298,6 @@ fun LuaShellScreen(
             }
         }
     }
-}
-
-@Composable
-private fun PureSyntaxHighlightedCode(
-    code: String,
-    language: String,
-    modifier: Modifier = Modifier
-) {
-    val theme = LocalHighlightTheme.current
-    val highlighted by rememberHighlightedCode(code, language, theme)
-    
-    Text(
-        text = highlighted ?: AnnotatedString(code),
-        style = TextStyle(
-            color = theme.defaultTextColor.takeIf { it != Color.Unspecified } ?: Color.White,
-            fontFamily = FontFamily.Monospace,
-            fontSize = 12.sp,
-            lineHeight = 16.sp
-        ),
-        modifier = modifier
-    )
 }
 
 @Composable

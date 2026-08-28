@@ -5,6 +5,8 @@ import java.util.Date
 enum class LogType {
     SYSTEM,
     INTERCONNECT,
+    LUA_ERROR,
+    JS_ERROR,
     LOCAL_ERROR,
     UNKNOWN
 }
