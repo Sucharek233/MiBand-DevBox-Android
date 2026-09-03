@@ -13,6 +13,7 @@ navigationCompose = "2.10.0"
 kotlinxSerializationJson = "1.11.0"
 vico = "3.3.0"
 composeHighlight = "0.33.0"
+documentfile = "1.0.1"
 
 [libraries]
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
@@ -38,6 +39,7 @@ vico-compose-m2 = { group = "com.patrykandpatrick.vico", name = "compose-m2", ve
 vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
 vico-compose-glance = { group = "com.patrykandpatrick.vico", name = "compose-glance", version.ref = "vico" }
 compose-highlight = { module = "dev.hossain:compose-highlight", version.ref = "composeHighlight" }
+androidx-documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

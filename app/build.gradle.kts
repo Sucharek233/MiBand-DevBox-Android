@@ -86,6 +86,8 @@ dependencies {
 
     implementation(libs.compose.highlight)
 
+    implementation(libs.androidx.documentfile)
+
     implementation(files("libs/xms-wearable-lib_1.4_release.aar"))
 
     testImplementation(libs.junit)

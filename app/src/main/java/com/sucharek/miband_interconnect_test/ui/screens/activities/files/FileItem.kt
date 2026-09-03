@@ -5,8 +5,12 @@ import org.json.JSONObject
 data class FileItem(
     val name: String,
     val isDirectory: Boolean,
-    val sizeBytes: Long = 0L
+    val sizeBytes: Long = 0L,
+    val parentPath: String = ""
 ) {
+    val fullPath: String
+        get() = if (parentPath == "/") "/$name" else "$parentPath/$name"
+
     companion object {
         fun fromJson(json: JSONObject): FileItem {
             return FileItem(

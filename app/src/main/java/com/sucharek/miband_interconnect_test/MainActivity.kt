@@ -122,7 +122,7 @@ class MainActivity : ComponentActivity() {
                             composable<Screen.FileExplorer> {
                                 val activity = LocalActivity.current as ComponentActivity
                                 val explorerViewModel: FileExplorerViewModel = viewModel(viewModelStoreOwner = activity) {
-                                    FileExplorerViewModel(watchViewModel, initialPath = "/")
+                                    FileExplorerViewModel(watchViewModel, activity.application, initialPath = "/")
                                 }
                                 FileExplorerScreen(viewModel = explorerViewModel)
                             }

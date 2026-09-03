@@ -159,7 +159,7 @@ private fun SystemLogItem(log: SystemLogEntry) {
                     }
                     
                     if (log.raw != null && log.raw != log.message) {
-                        val displayRaw = if (log.raw.length > 200) log.raw.take(200) + "..." else log.raw
+                        val displayRaw = if (log.raw.length > 120) log.raw.take(120) + "..." else log.raw
                         
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
