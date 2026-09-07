@@ -18,6 +18,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -34,12 +35,6 @@ import dev.hossain.highlight.ui.rememberSyntaxHighlightedEditorValue
 import dev.hossain.highlight.ui.LocalHighlightTheme
 import com.sucharek.miband_interconnect_test.ui.components.PureSyntaxHighlightedCode
 import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.ConsoleEntry
-import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsBg
-import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsDimArrow
-import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsErrorBg
-import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsErrorText
-import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsLineDivider
-import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsPromptBlue
 import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.JsonTreeItem
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHighlightApi::class)
@@ -62,6 +57,7 @@ fun LuaShellScreen(
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
     val interactionSource = remember { MutableInteractionSource() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(entries.size, codeInput.text) {
         val totalItems = entries.size + 1
@@ -75,6 +71,10 @@ fun LuaShellScreen(
             val code = codeInput.text
             codeInput = TextFieldValue("")
             viewModel.executeLuaCode(code)
+            
+            // Keep the keyboard open
+            focusRequester.requestFocus()
+            keyboardController?.show()
         }
     }
 
@@ -85,7 +85,7 @@ fun LuaShellScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(DevToolsBg)
+                .background(MaterialTheme.colorScheme.background)
                 .imePadding()
         ) {
             // --- Header ---
@@ -98,7 +98,7 @@ fun LuaShellScreen(
                     text = "Lua Shell",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
 
@@ -125,7 +125,7 @@ fun LuaShellScreen(
                                     .fillMaxWidth()
                                     .then(
                                         if (entry is ConsoleEntry.Error) {
-                                            Modifier.background(DevToolsErrorBg)
+                                            Modifier.background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f))
                                         } else Modifier
                                     )
                                     .padding(horizontal = 8.dp, vertical = 3.dp)
@@ -135,7 +135,7 @@ fun LuaShellScreen(
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
                                                 text = "lua> ",
-                                                color = DevToolsPromptBlue,
+                                                color = MaterialTheme.colorScheme.primary,
                                                 fontSize = 12.sp,
                                                 fontFamily = FontFamily.Monospace,
                                                 modifier = Modifier.padding(top = 4.dp)
@@ -152,7 +152,7 @@ fun LuaShellScreen(
                                         Row(verticalAlignment = Alignment.Top) {
                                             Text(
                                                 text = "‹ ",
-                                                color = DevToolsDimArrow,
+                                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f),
                                                 fontSize = 12.sp,
                                                 fontFamily = FontFamily.Monospace,
                                                 modifier = Modifier.padding(end = 2.dp)
@@ -182,7 +182,7 @@ fun LuaShellScreen(
                                         Row(verticalAlignment = Alignment.Top) {
                                             Text(
                                                 text = "⊗ ",
-                                                color = DevToolsErrorText,
+                                                color = MaterialTheme.colorScheme.error,
                                                 fontSize = 12.sp,
                                                 fontFamily = FontFamily.Monospace,
                                                 modifier = Modifier.padding(end = 4.dp)
@@ -190,14 +190,14 @@ fun LuaShellScreen(
                                             Column {
                                                 Text(
                                                     text = entry.message,
-                                                    color = DevToolsErrorText,
+                                                    color = MaterialTheme.colorScheme.error,
                                                     fontSize = 12.sp,
                                                     fontFamily = FontFamily.Monospace
                                                 )
                                                 if (entry.stack != null) {
                                                     Text(
                                                         text = entry.stack,
-                                                        color = DevToolsErrorText.copy(alpha = 0.7f),
+                                                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
                                                         fontSize = 10.sp,
                                                         fontFamily = FontFamily.Monospace
                                                     )
@@ -207,7 +207,7 @@ fun LuaShellScreen(
                                     }
                                 }
                             }
-                            HorizontalDivider(color = DevToolsLineDivider, thickness = 0.5.dp)
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
                         }
 
                         // Interactive Input Prompt
@@ -220,7 +220,7 @@ fun LuaShellScreen(
                             ) {
                                 Text(
                                     text = "lua> ",
-                                    color = DevToolsPromptBlue,
+                                    color = MaterialTheme.colorScheme.primary,
                                     fontSize = 12.sp,
                                     fontFamily = FontFamily.Monospace,
                                     lineHeight = 16.sp
@@ -230,12 +230,12 @@ fun LuaShellScreen(
                                     value = displayValue,
                                     onValueChange = { codeInput = it },
                                     textStyle = TextStyle(
-                                        color = Color.White,
+                                        color = MaterialTheme.colorScheme.onBackground,
                                         fontFamily = FontFamily.Monospace,
                                         fontSize = 12.sp,
                                         lineHeight = 16.sp
                                     ),
-                                    cursorBrush = SolidColor(DevToolsPromptBlue),
+                                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                                     singleLine = false,
                                     maxLines = 8,
                                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
@@ -249,14 +249,13 @@ fun LuaShellScreen(
                 }
             }
 
-            // Quick Toolbar
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF1E1E1E))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
                     .navigationBarsPadding()
             ) {
-                HorizontalDivider(color = DevToolsLineDivider, thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
 
                 Row(
                     modifier = Modifier
@@ -266,30 +265,47 @@ fun LuaShellScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        LuaShellKeyButton("▲") {
-                            viewModel.getPreviousCommand()?.let { 
-                                codeInput = TextFieldValue(it, selection = androidx.compose.ui.text.TextRange(it.length))
-                            }
+                        FilledTonalButton(
+                            onClick = { 
+                                viewModel.getPreviousCommand()?.let { 
+                                    codeInput = TextFieldValue(it, selection = androidx.compose.ui.text.TextRange(it.length))
+                                }
+                            },
+                            contentPadding = PaddingValues(horizontal = 12.dp),
+                            modifier = Modifier.height(32.dp),
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
+                            Text("▲", fontSize = 11.sp)
                         }
-                        LuaShellKeyButton("▼") {
-                            viewModel.getNextCommand()?.let { 
-                                codeInput = TextFieldValue(it, selection = androidx.compose.ui.text.TextRange(it.length))
-                            }
+                        FilledTonalButton(
+                            onClick = { 
+                                viewModel.getNextCommand()?.let { 
+                                    codeInput = TextFieldValue(it, selection = androidx.compose.ui.text.TextRange(it.length))
+                                }
+                            },
+                            contentPadding = PaddingValues(horizontal = 12.dp),
+                            modifier = Modifier.height(32.dp),
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
+                            Text("▼", fontSize = 11.sp)
                         }
-                        LuaShellKeyButton("CLR") {
-                            viewModel.clearConsole()
+                        FilledTonalButton(
+                            onClick = { viewModel.clearConsole() },
+                            contentPadding = PaddingValues(horizontal = 12.dp),
+                            modifier = Modifier.height(32.dp),
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
+                            Text("CLR", fontSize = 11.sp)
                         }
                     }
 
                     Button(
                         onClick = onSend,
-                        colors = ButtonDefaults.buttonColors(containerColor = DevToolsPromptBlue),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        modifier = Modifier.height(30.dp)
+                        modifier = Modifier.height(32.dp)
                     ) {
                         Text(
                             text = "EXEC ↵",
-                            color = Color.Black,
                             fontFamily = FontFamily.Monospace,
                             fontSize = 11.sp
                         )
@@ -300,27 +316,3 @@ fun LuaShellScreen(
     }
 }
 
-@Composable
-private fun LuaShellKeyButton(
-    text: String,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        color = Color(0xFF333333),
-        shape = MaterialTheme.shapes.extraSmall,
-        modifier = Modifier.height(30.dp)
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(horizontal = 10.dp)
-        ) {
-            Text(
-                text = text,
-                color = Color.White,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 11.sp
-            )
-        }
-    }
-}

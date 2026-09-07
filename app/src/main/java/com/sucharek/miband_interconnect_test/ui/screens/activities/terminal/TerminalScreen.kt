@@ -19,20 +19,14 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-// Color constants
-private val TerminalBg = Color(0xFF101010)
-private val TerminalText = Color(0xFF00FF66)      // Green for stdout
-private val TerminalPrompt = Color(0xFFFFD700)    // Gold for ap>
-private val TerminalError = Color(0xFFFF5252)     // Red ONLY for actual failures
-private val TerminalSystem = Color(0xFF888888)    // Gray for client info
-private val ToolbarBg = Color(0xFF1E1E1E)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,14 +34,15 @@ fun TerminalScreen(
     viewModel: TerminalViewModel,
     modifier: Modifier = Modifier
 ) {
-    var inputCommand by remember { mutableStateOf("") }
+    var inputCommand by remember { mutableStateOf(TextFieldValue("")) }
     val logs by viewModel.terminalLogs.collectAsState()
 
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
     val interactionSource = remember { MutableInteractionSource() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(logs.size, inputCommand) {
+    LaunchedEffect(logs.size, inputCommand.text) {
         val itemCount = logs.size + 1
         if (itemCount > 0) {
             listState.animateScrollToItem(itemCount - 1)
@@ -55,10 +50,14 @@ fun TerminalScreen(
     }
 
     val onSend = {
-        if (inputCommand.isNotBlank()) {
-            val cmd = inputCommand
-            inputCommand = ""
+        if (inputCommand.text.isNotBlank()) {
+            val cmd = inputCommand.text
+            inputCommand = TextFieldValue("")
             viewModel.executeCommand(cmd)
+            
+            // Re-request focus and ensure keyboard stays open
+            focusRequester.requestFocus()
+            keyboardController?.show()
         }
     }
 
@@ -69,7 +68,7 @@ fun TerminalScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(TerminalBg)
+                .background(MaterialTheme.colorScheme.background)
                 .imePadding()
                 .clickable(
                     interactionSource = interactionSource,
@@ -88,7 +87,7 @@ fun TerminalScreen(
                     text = "Terminal",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
 
@@ -104,12 +103,11 @@ fun TerminalScreen(
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     items(logs) { line ->
-                        // Clean, explicit color mapping by LineType
                         val textColor = when (line.type) {
-                            LineType.INPUT -> TerminalPrompt
-                            LineType.OUTPUT -> TerminalText
-                            LineType.ERROR -> TerminalError
-                            LineType.SYSTEM -> TerminalSystem
+                            LineType.INPUT -> MaterialTheme.colorScheme.primary
+                            LineType.OUTPUT -> MaterialTheme.colorScheme.onSurface
+                            LineType.ERROR -> MaterialTheme.colorScheme.error
+                            LineType.SYSTEM -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         }
 
                         Text(
@@ -131,7 +129,7 @@ fun TerminalScreen(
                             Text(
                                 text = "ap> ",
                                 style = TextStyle(
-                                    color = TerminalPrompt,
+                                    color = MaterialTheme.colorScheme.primary,
                                     fontFamily = FontFamily.Monospace,
                                     fontSize = 13.sp
                                 )
@@ -141,11 +139,11 @@ fun TerminalScreen(
                                 value = inputCommand,
                                 onValueChange = { inputCommand = it },
                                 textStyle = TextStyle(
-                                    color = TerminalText,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontFamily = FontFamily.Monospace,
                                     fontSize = 13.sp
                                 ),
-                                cursorBrush = SolidColor(TerminalText),
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                                 keyboardActions = KeyboardActions(onSend = { onSend() }),
@@ -162,63 +160,59 @@ fun TerminalScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(ToolbarBg)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
                     .navigationBarsPadding()
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    TerminalKeyButton("▲") {
-                        viewModel.getPreviousCommand()?.let { inputCommand = it }
+                    FilledTonalButton(
+                        onClick = { 
+                            viewModel.getPreviousCommand()?.let { 
+                                inputCommand = TextFieldValue(it, selection = androidx.compose.ui.text.TextRange(it.length)) 
+                            }
+                        },
+                        contentPadding = PaddingValues(horizontal = 12.dp),
+                        modifier = Modifier.height(32.dp),
+                        shape = MaterialTheme.shapes.extraSmall
+                    ) {
+                        Text("▲", fontSize = 11.sp)
                     }
-                    TerminalKeyButton("▼") {
-                        viewModel.getNextCommand()?.let { inputCommand = it }
+                    FilledTonalButton(
+                        onClick = { 
+                            viewModel.getNextCommand()?.let { 
+                                inputCommand = TextFieldValue(it, selection = androidx.compose.ui.text.TextRange(it.length)) 
+                            }
+                        },
+                        contentPadding = PaddingValues(horizontal = 12.dp),
+                        modifier = Modifier.height(32.dp),
+                        shape = MaterialTheme.shapes.extraSmall
+                    ) {
+                        Text("▼", fontSize = 11.sp)
                     }
-                    TerminalKeyButton("CLR") {
-                        viewModel.clearScreen()
+                    FilledTonalButton(
+                        onClick = { viewModel.clearScreen() },
+                        contentPadding = PaddingValues(horizontal = 12.dp),
+                        modifier = Modifier.height(32.dp),
+                        shape = MaterialTheme.shapes.extraSmall
+                    ) {
+                        Text("CLR", fontSize = 11.sp)
                     }
                 }
 
                 Button(
                     onClick = onSend,
-                    colors = ButtonDefaults.buttonColors(containerColor = TerminalPrompt),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                     modifier = Modifier.height(32.dp)
                 ) {
                     Text(
                         text = "RUN",
-                        color = Color.Black,
                         fontFamily = FontFamily.Monospace,
                         fontSize = 11.sp
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun TerminalKeyButton(
-    text: String,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        color = Color(0xFF2C2C2C),
-        shape = MaterialTheme.shapes.extraSmall,
-        modifier = Modifier.height(32.dp)
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(horizontal = 10.dp)
-        ) {
-            Text(
-                text = text,
-                color = Color.White,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 11.sp
-            )
         }
     }
 }
