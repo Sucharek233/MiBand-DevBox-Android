@@ -1,6 +1,7 @@
 package com.sucharek.miband_interconnect_test.ui.screens.activities.moduleCompatibility
 
 import org.json.JSONObject
+import com.sucharek.miband_interconnect_test.models.MessageStates
 
 enum class CompatStatus {
     UNKNOWN,
@@ -29,7 +30,7 @@ sealed class ModuleResponse {
                 val outer = JSONObject(payloadString)
                 val state = outer.optString("state", "")
 
-                if (state == "error") {
+                if (state == MessageStates.ERROR) {
                     return Error(outer.optString("msg", "Unknown error"))
                 }
 

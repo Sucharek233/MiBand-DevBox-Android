@@ -2,6 +2,7 @@ package com.sucharek.miband_interconnect_test.ui.screens.activities.sensors
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sucharek.miband_interconnect_test.models.MessageStates
 import com.sucharek.miband_interconnect_test.ui.screens.maindashboard.WatchViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -117,14 +118,14 @@ class SensorViewModel(
             val state = json.optString("state")
 
             when (state) {
-                "error" -> {
+                MessageStates.ERROR -> {
                     val msg = json.optString("msg", "Unknown error")
                     val stack = json.optString("stack", "")
                     _lastError.value = msg to if (stack.isNotEmpty()) stack else null
                     _subscriptionState.value = SubscriptionState.ERROR
                 }
 
-                "done" -> {
+                MessageStates.DONE -> {
                     if (json.has("res")) {
                         parseListResult(json.getJSONObject("res"))
                         _isDiscovering.value = false
@@ -142,7 +143,7 @@ class SensorViewModel(
                     }
                 }
 
-                "stream" -> {
+                MessageStates.STREAM -> {
                     if (_subscriptionState.value != SubscriptionState.SUBSCRIBED) {
                         _subscriptionState.value = SubscriptionState.SUBSCRIBED
                     }

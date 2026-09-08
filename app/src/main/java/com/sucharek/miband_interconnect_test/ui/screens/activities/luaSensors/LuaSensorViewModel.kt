@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
+import com.sucharek.miband_interconnect_test.models.MessageStates
 
 class LuaSensorViewModel(
     private val globalWatchViewModel: WatchViewModel
@@ -173,13 +174,13 @@ class LuaSensorViewModel(
             val res = if (json.has("res")) json.opt("res") else json.opt("result")
 
             when (state) {
-                "error" -> {
+                MessageStates.ERROR -> {
                     _lastError.value = (res?.toString() ?: "Unknown error") to null
                     _subscriptionState.value = SubscriptionState.ERROR
                     _isDiscovering.value = false
                     discoveryPhase = 0
                 }
-                "done" -> {
+                MessageStates.DONE -> {
                     val resStr = res?.toString() ?: ""
                     if (resStr == "Unsubscribed" || resStr == "Not subscribed") {
                         _subscriptionState.value = SubscriptionState.DISCONNECTED
@@ -207,7 +208,7 @@ class LuaSensorViewModel(
                         _isDiscovering.value = false
                     }
                 }
-                "stream" -> {
+                MessageStates.STREAM -> {
                     if (_subscriptionState.value != SubscriptionState.SUBSCRIBED) {
                         _subscriptionState.value = SubscriptionState.SUBSCRIBED
                     }

@@ -8,6 +8,7 @@ import com.sucharek.miband_interconnect_test.interconnect.Messages
 import com.sucharek.miband_interconnect_test.interconnect.Subscriptions
 import com.sucharek.miband_interconnect_test.ui.screens.activities.apps.AppsRepository
 import com.sucharek.miband_interconnect_test.models.LogType
+import com.sucharek.miband_interconnect_test.models.MessageStates
 import com.sucharek.miband_interconnect_test.models.SystemLogEntry
 import com.xiaomi.xms.wearable.node.DataItem
 import com.xiaomi.xms.wearable.node.DataSubscribeResult
@@ -217,7 +218,7 @@ class WatchViewModel(
                 val state = json.optString("state")
                 val errorMsg = json.optString("msg").ifEmpty { json.optString("message") }
 
-                if (state == "error") {
+                if (state == MessageStates.ERROR) {
                     if (type != "interconnect") {
                         _systemMessages.emit(message)
                     }
@@ -229,9 +230,9 @@ class WatchViewModel(
                 when (type) {
                     "ping" -> {
                         val state = json.optString("state")
-                        if (state == "done") {
+                        if (state == MessageStates.DONE) {
                             _luaServiceActive.value = true
-                        } else if (state == "timeout" || state == "error") {
+                        } else if (state == MessageStates.TIMEOUT || state == MessageStates.ERROR) {
                             _luaServiceActive.value = false
                         }
                         _pingMessages.emit(message)
@@ -320,20 +321,20 @@ class WatchViewModel(
                         "Sent $msgType"
                     } else {
                         when (state) {
-                            "error" -> "Error in $msgType"
-                            "stream" -> "Stream $msgType"
+                            MessageStates.ERROR -> "Error in $msgType"
+                            MessageStates.STREAM -> "Stream $msgType"
                             else -> "Recv $msgType"
                         }
                     }
 
-                    val finalType = if (!isSent && state == "error") LogType.LOCAL_ERROR else type
+                    val finalType = if (!isSent && state == MessageStates.ERROR) LogType.LOCAL_ERROR else type
 
                     SystemLogEntry(
                         message = summary,
                         stack = if (json.has("stack")) json.optString("stack") else null,
                         type = finalType,
                         raw = jsonStr,
-                        isStream = !isSent && state == "stream"
+                        isStream = !isSent && state == MessageStates.STREAM
                     )
                 } else {
                     SystemLogEntry(
@@ -353,7 +354,7 @@ class WatchViewModel(
                         type = LogType.INTERCONNECT,
                         raw = rawMessage
                     )
-                } else if (json.optString("state") == "error") {
+                } else if (json.optString("state") == MessageStates.ERROR) {
                     val errorType = when (type) {
                         "luashell" -> LogType.LUA_ERROR
                         "qjs" -> LogType.JS_ERROR

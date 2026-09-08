@@ -10,6 +10,7 @@ import com.sucharek.miband_interconnect_test.ui.screens.maindashboard.WatchViewM
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import com.sucharek.miband_interconnect_test.models.MessageStates
 import java.io.OutputStream
 
 sealed class DownloadState {
@@ -86,19 +87,19 @@ class FileExplorerViewModel(
             val appState = baseJson.optString("appState", state)
             val res = baseJson.opt("res")
 
-            if (state == "error") {
+            if (state == MessageStates.ERROR) {
                 handleGlobalError(baseJson.optString("msg", "Unknown transport error"))
                 return
             }
 
-            if (state == "stream") {
+            if (state == MessageStates.STREAM) {
                 handleDownloadChunk(res, baseJson.optJSONObject("meta"))
                 return
             }
 
             when (appState) {
-                "done" -> handleOperationDone(res)
-                "error" -> handleOperationError(res?.toString() ?: "Unknown Lua error")
+                MessageStates.DONE -> handleOperationDone(res)
+                MessageStates.ERROR -> handleOperationError(res?.toString() ?: "Unknown Lua error")
             }
 
         } catch (e: Exception) {

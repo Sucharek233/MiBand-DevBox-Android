@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import com.sucharek.miband_interconnect_test.models.MessageStates
 
 /**
  * Centralized repository to handle caching and data synchronization for the Apps workspace.
@@ -201,7 +202,7 @@ class AppsRepository(
             }
             
             // 3. Status based results (Icon, Manifest, Write)
-            else if (state == "done") {
+            else if (state == MessageStates.DONE) {
                 if (res is String) {
                     if (res == "Written") {
                         val pkg = lastRequestedManifestPkg
@@ -240,7 +241,7 @@ class AppsRepository(
                         }
                     }
                 }
-            } else if (state == "error" || state == "err") {
+            } else if (state == MessageStates.ERROR) {
                 _isListLoading.value = false
                 _loadingInfo.update { emptySet() }
                 _loadingIcons.update { emptySet() }

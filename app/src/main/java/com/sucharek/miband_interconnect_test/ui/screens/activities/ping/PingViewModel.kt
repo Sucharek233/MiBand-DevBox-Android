@@ -2,6 +2,7 @@ package com.sucharek.miband_interconnect_test.ui.screens.activities.ping
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sucharek.miband_interconnect_test.models.MessageStates
 import com.sucharek.miband_interconnect_test.ui.screens.maindashboard.WatchViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -75,14 +76,14 @@ class PingViewModel(
             if (pendingIndex != -1) {
                 val pending = currentPings[pendingIndex]
                 val updated = when (state) {
-                    "done" -> pending.copy(
+                    MessageStates.DONE -> pending.copy(
                         status = PingStatus.SUCCESS,
                         watchStartTime = if (json.has("startTime")) json.optLong("startTime") else null,
                         watchEndTime = if (json.has("endTime")) json.optLong("endTime") else null,
                         watchAckTime = if (json.has("ackTime")) json.optLong("ackTime") else null,
                         androidEndTime = System.currentTimeMillis()
                     )
-                    "timeout" -> pending.copy(status = PingStatus.TIMEOUT)
+                    MessageStates.TIMEOUT -> pending.copy(status = PingStatus.TIMEOUT)
                     else -> pending.copy(status = PingStatus.ERROR, errorMsg = json.optString("msg"))
                 }
                 currentPings[pendingIndex] = updated

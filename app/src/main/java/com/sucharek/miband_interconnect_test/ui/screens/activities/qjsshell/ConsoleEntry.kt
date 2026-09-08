@@ -1,5 +1,6 @@
 package com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell
 
+import com.sucharek.miband_interconnect_test.models.MessageStates
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -38,7 +39,7 @@ sealed class ConsoleEntry {
                 }
 
                 // 2. Check for error or result
-                if (state == "error") {
+                if (state == MessageStates.ERROR) {
                     val msg = outer.optString("msg", "Unknown error")
                     val stack = outer.optString("stack", null)
                     entries.add(Error(message = msg, stack = stack))

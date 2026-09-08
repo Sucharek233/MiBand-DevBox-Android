@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import com.sucharek.miband_interconnect_test.models.MessageStates
 
 class LuaShellViewModel(
     private val globalWatchViewModel: WatchViewModel
@@ -38,11 +39,11 @@ class LuaShellViewModel(
                     }
 
                     // 2. Handle Result or Error
-                    if (state == "error") {
+                    if (state == MessageStates.ERROR) {
                         val msg = outer.optString("msg", "Unknown error")
                         val stack = outer.optString("stack", null)
                         entriesToAdd.add(ConsoleEntry.Error(message = msg, stack = stack))
-                    } else if (state == "done") {
+                    } else if (state == MessageStates.DONE) {
                         val res = outer.opt("res")
                         val hasRes = res != null && res != JSONObject.NULL
                         if (hasRes) {
