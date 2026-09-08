@@ -22,9 +22,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsBg
-import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsLineDivider
-import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.DevToolsPromptBlue
 import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.JsonTreeItem
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,7 +48,7 @@ fun ModuleCompatibilityScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(DevToolsBg)
+                .background(MaterialTheme.colorScheme.background)
                 .imePadding()
         ) {
             // --- Header ---
@@ -66,26 +63,24 @@ fun ModuleCompatibilityScreen(
                     text = "Modules",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onBackground
                 )
 
                 Button(
                     onClick = { viewModel.testSelectedCompat() },
-                    colors = ButtonDefaults.buttonColors(containerColor = DevToolsPromptBlue),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
                         contentDescription = null,
-                        tint = Color.Black,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Check Selected", color = Color.Black, fontSize = 12.sp)
+                    Text("Check Selected", fontSize = 12.sp)
                 }
             }
 
-            HorizontalDivider(color = DevToolsLineDivider)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             // Scrollable Module List
             SelectionContainer(modifier = Modifier.weight(1f)) {
@@ -100,7 +95,7 @@ fun ModuleCompatibilityScreen(
                             onCheckCompat = { viewModel.testSingleCompat(item.name) },
                             onToggleExpand = { viewModel.fetchFunctions(item.name) }
                         )
-                        HorizontalDivider(color = DevToolsLineDivider, thickness = 0.5.dp)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
                     }
                 }
             }
@@ -109,7 +104,7 @@ fun ModuleCompatibilityScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF1E1E1E))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
                     .navigationBarsPadding()
                     .padding(8.dp)
             ) {
@@ -125,12 +120,12 @@ fun ModuleCompatibilityScreen(
                         textStyle = LocalTextStyle.current.copy(
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp,
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onSurface
                         ),
                         modifier = Modifier.weight(1f),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = DevToolsPromptBlue,
-                            unfocusedBorderColor = DevToolsLineDivider
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         )
                     )
 
@@ -141,12 +136,12 @@ fun ModuleCompatibilityScreen(
                                 customInput = ""
                             }
                         },
-                        modifier = Modifier.background(DevToolsPromptBlue, RoundedCornerShape(8.dp))
+                        modifier = Modifier.background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Add Module",
-                            tint = Color.Black
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }
@@ -168,7 +163,10 @@ private fun ModuleCardRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (item.isExpanded && !isUnsupported) Color(0xFF2A2A2A) else Color.Transparent)
+            .background(
+                if (item.isExpanded && !isUnsupported) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp) 
+                else Color.Transparent
+            )
             .padding(vertical = 4.dp, horizontal = 8.dp)
     ) {
         Row(
@@ -177,13 +175,12 @@ private fun ModuleCardRow(
         ) {
             Checkbox(
                 checked = item.isSelected,
-                onCheckedChange = { onToggleSelect() },
-                colors = CheckboxDefaults.colors(checkedColor = DevToolsPromptBlue)
+                onCheckedChange = { onToggleSelect() }
             )
 
             Text(
                 text = item.name,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontFamily = FontFamily.Monospace,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
@@ -196,19 +193,18 @@ private fun ModuleCardRow(
             when (item.status) {
                 CompatStatus.UNKNOWN -> {
                     TextButton(onClick = onCheckCompat) {
-                        Text("Check", color = Color.Gray, fontSize = 11.sp)
+                        Text("Check", color = MaterialTheme.colorScheme.outline, fontSize = 11.sp)
                     }
                 }
                 CompatStatus.CHECKING -> {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                        color = DevToolsPromptBlue
+                        strokeWidth = 2.dp
                     )
                 }
                 CompatStatus.SUPPORTED -> {
                     Surface(
-                        color = Color(0xFF1B4D2E),
+                        color = Color(0xFF1B4D2E), // Keeping standard green for "Supported" but could use TertiaryContainer
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.padding(end = 6.dp)
                     ) {
@@ -223,13 +219,13 @@ private fun ModuleCardRow(
                 }
                 CompatStatus.UNSUPPORTED -> {
                     Surface(
-                        color = Color(0xFF4D1B1B),
+                        color = MaterialTheme.colorScheme.errorContainer,
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.padding(end = 6.dp)
                     ) {
                         Text(
                             text = "Unsupported",
-                            color = Color(0xFFE57373),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -246,17 +242,16 @@ private fun ModuleCardRow(
                 if (item.isLoadingFuncs) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(14.dp),
-                        strokeWidth = 2.dp,
-                        color = DevToolsPromptBlue
+                        strokeWidth = 2.dp
                     )
                 } else {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.List,
                         contentDescription = "Inspect Functions",
                         tint = when {
-                            !isSupported -> Color.Gray.copy(alpha = 0.38f)
-                            item.functionsResult != null -> DevToolsPromptBlue
-                            else -> Color.White
+                            !isSupported -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            item.functionsResult != null -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.onSurface
                         },
                         modifier = Modifier.size(18.dp)
                     )
@@ -270,7 +265,7 @@ private fun ModuleCardRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 32.dp, end = 8.dp, bottom = 8.dp, top = 2.dp)
-                    .background(Color(0xFF1E1E1E), RoundedCornerShape(6.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(6.dp))
                     .padding(8.dp)
             ) {
                 if (item.functionsResult != null) {
@@ -279,14 +274,14 @@ private fun ModuleCardRow(
                 } else if (isSupported && !item.isLoadingFuncs) {
                     Text(
                         text = "Tap list icon to fetch module exports...",
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace
                     )
                 } else {
                     Text(
                         text = "Check compatibility first...",
-                        color = Color.Gray.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace
                     )

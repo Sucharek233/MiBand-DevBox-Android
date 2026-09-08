@@ -5,11 +5,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -247,45 +250,76 @@ private fun ChartTabContent(samples: List<SensorSample>) {
         Spacer(modifier = Modifier.height(8.dp))
 
         // --- Value Selection ---
-        Text(
-            text = "Select values to include in chart:",
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        FlowRow(
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            allKeys.forEach { key ->
-                val isSelected = selectedKeys.contains(key)
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier
-                        .toggleable(
-                            value = isSelected,
-                            role = Role.Checkbox,
-                            onValueChange = {
-                                selectedKeys = if (it) selectedKeys + key else selectedKeys - key
-                            }
-                        )
+            Text(
+                text = "Select values:",
+                style = MaterialTheme.typography.titleSmall
+            )
+            
+            Row {
+                TextButton(
+                    onClick = { selectedKeys = allKeys.toSet() },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(32.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    Text("Select All", fontSize = 12.sp)
+                }
+                TextButton(
+                    onClick = { selectedKeys = emptySet() },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text("Deselect All", fontSize = 12.sp)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 160.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                allKeys.forEach { key ->
+                    val isSelected = selectedKeys.contains(key)
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier
+                            .toggleable(
+                                value = isSelected,
+                                role = Role.Checkbox,
+                                onValueChange = {
+                                    selectedKeys = if (it) selectedKeys + key else selectedKeys - key
+                                }
+                            )
                     ) {
-                        Checkbox(
-                            checked = isSelected,
-                            onCheckedChange = null, // Handled by surface click
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Text(
-                            text = key,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(end = 4.dp)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = null, // Handled by surface click
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Text(
+                                text = key,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(end = 4.dp)
+                            )
+                        }
                     }
                 }
             }
