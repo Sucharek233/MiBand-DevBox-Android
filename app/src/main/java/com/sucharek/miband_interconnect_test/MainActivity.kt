@@ -51,6 +51,8 @@ import com.sucharek.miband_interconnect_test.ui.screens.activities.files.FileExp
 import com.sucharek.miband_interconnect_test.ui.screens.activities.files.FileExplorerViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.luashell.LuaShellScreen
 import com.sucharek.miband_interconnect_test.ui.screens.activities.luashell.LuaShellViewModel
+import com.sucharek.miband_interconnect_test.ui.screens.activities.luasysinfo.LuaSysInfoScreen
+import com.sucharek.miband_interconnect_test.ui.screens.activities.luasysinfo.LuaSysInfoViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.luaSensors.LuaSensorScreen
 import com.sucharek.miband_interconnect_test.ui.screens.activities.luaSensors.LuaSensorViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.moduleCompatibility.ModuleCompatibilityScreen
@@ -202,6 +204,15 @@ class MainActivity : ComponentActivity() {
                                     LuaShellViewModel(watchViewModel)
                                 }
                                 LuaShellScreen(viewModel = luaViewModel)
+                            }
+
+                            // Lua SysInfo
+                            composable<Screen.LuaSysInfo> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val sysInfoViewModel: LuaSysInfoViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    LuaSysInfoViewModel(watchViewModel)
+                                }
+                                LuaSysInfoScreen(viewModel = sysInfoViewModel)
                             }
 
                             // Module compatibility

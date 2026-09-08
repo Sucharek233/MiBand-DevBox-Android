@@ -36,7 +36,8 @@ enum class DashboardCategory(
     // Lua Service
     TERMINAL("Terminal", "Send custom commands", ServiceType.LUA, Icons.Default.Terminal),
     LUASHELL("Lua Shell", "Run custom Lua code", ServiceType.LUA, Icons.Default.Code),
-    FILES("File Explorer", "Explore the filesystem", ServiceType.LUA, Icons.Default.Folder),
+    LUASYSINFO("Lua System Info", "Detailed system details and status", ServiceType.LUA, Icons.Default.Devices),
+    FILES("File Manager", "Explore the filesystem", ServiceType.LUA, Icons.Default.Folder),
     LUASENSORS("Lua Sensors", "Stream sensor data", ServiceType.LUA, Icons.Default.Sensors),
     APPS("Apps", "View installed apps", ServiceType.LUA, Icons.Default.Apps),
 

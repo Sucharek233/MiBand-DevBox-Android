@@ -47,6 +47,9 @@ sealed interface Screen {
     object LuaSensors : Screen
 
     @Serializable
+    object LuaSysInfo : Screen
+
+    @Serializable
     data class LuaSensorChart(val sensorName: String) : Screen
 
     @Serializable

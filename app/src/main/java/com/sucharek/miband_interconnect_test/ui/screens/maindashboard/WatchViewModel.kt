@@ -75,6 +75,10 @@ class WatchViewModel(
     private val _luaShellMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
     val luaShellMessages: SharedFlow<String> = _luaShellMessages.asSharedFlow()
 
+    // Lua SysInfo
+    private val _luaSysInfoMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
+    val luaSysInfoMessages: SharedFlow<String> = _luaSysInfoMessages.asSharedFlow()
+
     // Apps
     private val _appsMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
     val appsMessages: SharedFlow<String> = _appsMessages.asSharedFlow()
@@ -273,6 +277,7 @@ class WatchViewModel(
                         _pingMessages.emit(message)
                     }
                     "luashell" -> _luaShellMessages.emit(message)
+                    "sysInfoLua" -> _luaSysInfoMessages.emit(message)
                     "cmd" -> _terminalMessages.emit(message)
                     "io" -> _ioMessages.emit(message)
                     "qjs" -> _qjsMessages.emit(message)

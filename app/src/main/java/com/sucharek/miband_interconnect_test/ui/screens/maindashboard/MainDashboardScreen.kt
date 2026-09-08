@@ -207,6 +207,7 @@ private fun DashboardCategoryCard(
                 when (category) {
                     DashboardCategory.TERMINAL -> onNavigate(Screen.RemoteTerminal)
                     DashboardCategory.LUASHELL -> onNavigate(Screen.LuaShell)
+                    DashboardCategory.LUASYSINFO -> onNavigate(Screen.LuaSysInfo)
                     DashboardCategory.FILES -> onNavigate(Screen.FileExplorer())
                     DashboardCategory.PING -> onNavigate(Screen.Ping(initialType = if (selectedService == ServiceType.QUICKJS) "qjs" else "lua"))
                     DashboardCategory.QJS -> onNavigate(Screen.QjsShell)
