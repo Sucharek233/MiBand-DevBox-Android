@@ -13,8 +13,8 @@ import com.sucharek.miband_interconnect_test.models.SystemLogEntry
 import com.xiaomi.xms.wearable.node.DataItem
 import com.xiaomi.xms.wearable.node.DataSubscribeResult
 import com.xiaomi.xms.wearable.node.Node
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 class WatchViewModel(
@@ -93,6 +93,20 @@ class WatchViewModel(
     // Mailbox Busy Events
     private val _mailboxBusyEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val mailboxBusyEvents: SharedFlow<Unit> = _mailboxBusyEvents.asSharedFlow()
+
+    // Screen navigation events for cancellation
+    private val _operationCanceledEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val operationCanceledEvents: SharedFlow<Unit> = _operationCanceledEvents.asSharedFlow()
+
+    // Global Operation Timing
+    private val _longRunningOperation = MutableStateFlow<String?>(null)
+    val longRunningOperation: StateFlow<String?> = _longRunningOperation.asStateFlow()
+
+    private val _lastTimeoutError = MutableStateFlow<String?>(null)
+    val lastTimeoutError: StateFlow<String?> = _lastTimeoutError.asStateFlow()
+
+    private val activeOperations = mutableMapOf<String, Long>()
+    private var timeoutJob: Job? = null
 
     val appsRepository = AppsRepository(this, viewModelScope)
 
@@ -218,21 +232,42 @@ class WatchViewModel(
                 val state = json.optString("state")
                 val errorMsg = json.optString("msg").ifEmpty { json.optString("message") }
 
+                // 1. Clear tracking for any terminal state (Done, Error, or Timeout)
+                if (state == MessageStates.DONE || state == MessageStates.ERROR || state == MessageStates.TIMEOUT) {
+                    val isGlobalTimeout = (state == MessageStates.ERROR || state == MessageStates.TIMEOUT) && 
+                        (errorMsg == "Mailbox timeout" || errorMsg == "Mailbox busy")
+                    
+                    if (isGlobalTimeout) {
+                        _lastTimeoutError.value = "The band reported a timeout: $errorMsg"
+                        synchronized(activeOperations) {
+                            activeOperations.clear()
+                        }
+                        _longRunningOperation.value = null
+                        // Block emission of this global error to specific feature flows
+                        return@launch
+                    } else {
+                        clearOperationTracking(type)
+                    }
+                }
+
+                // 2. Standard Error Handling for Logs
                 if (state == MessageStates.ERROR) {
-                    if (type != "interconnect") {
+                    // Refined: Only log if it's NOT a global mailbox timeout (which was handled above)
+                    if (type != "interconnect" && errorMsg != "Mailbox timeout" && errorMsg != "Mailbox busy") {
                         _systemMessages.emit(message)
                     }
-                    if (errorMsg.contains("Mailbox")) {
+                    if (errorMsg == "Mailbox busy") {
                         _mailboxBusyEvents.emit(Unit)
                     }
                 }
 
+                // 3. Dispatch to specific Flows
                 when (type) {
                     "ping" -> {
-                        val state = json.optString("state")
-                        if (state == MessageStates.DONE) {
+                        val pingState = json.optString("state")
+                        if (pingState == MessageStates.DONE) {
                             _luaServiceActive.value = true
-                        } else if (state == MessageStates.TIMEOUT || state == MessageStates.ERROR) {
+                        } else if (pingState == MessageStates.TIMEOUT || pingState == MessageStates.ERROR) {
                             _luaServiceActive.value = false
                         }
                         _pingMessages.emit(message)
@@ -286,6 +321,15 @@ class WatchViewModel(
     }
 
     fun sendStructuredMessage(type: String, args: JSONObject = JSONObject()) {
+        // Start tracking for all operations to ensure they are acknowledged
+        // EXCEPT for download-related IO operations which can naturally take a long time
+        val subType = args.optString("type")
+        val isDownloadOp = type == "io" && (subType == "getStream" || subType == "chunk")
+        
+        if (!isDownloadOp) {
+            startOperationTracking(type)
+        }
+
         viewModelScope.launch {
             try {
                 val envelope = JSONObject().apply {
@@ -298,6 +342,57 @@ class WatchViewModel(
                 _systemMessages.emit("LOCAL ERROR: Envelope packaging aborted due to exception")
             }
         }
+    }
+
+    private fun startOperationTracking(type: String) {
+        synchronized(activeOperations) {
+            activeOperations[type] = System.currentTimeMillis()
+        }
+        
+        if (timeoutJob == null || timeoutJob?.isActive == false) {
+            timeoutJob = viewModelScope.launch(Dispatchers.Default) {
+                while (true) {
+                    val now = System.currentTimeMillis()
+                    val slowOp = synchronized(activeOperations) {
+                        activeOperations.entries.find { now - it.value > 2000 }?.key
+                    }
+                    
+                    _longRunningOperation.value = slowOp
+                    
+                    if (slowOp == null && synchronized(activeOperations) { activeOperations.isEmpty() }) {
+                        break
+                    }
+                    delay(500)
+                }
+            }
+        }
+    }
+
+    private fun clearOperationTracking(type: String) {
+        synchronized(activeOperations) {
+            activeOperations.remove(type)
+        }
+        if (_longRunningOperation.value == type) {
+            _longRunningOperation.value = null
+        }
+    }
+
+    fun cancelActiveOperation() {
+        synchronized(activeOperations) {
+            activeOperations.clear()
+        }
+        _longRunningOperation.value = null
+        
+        // Also emit mailbox reset to let ViewModels know they should stop loading
+        viewModelScope.launch {
+            _mailboxBusyEvents.emit(Unit)
+            _operationCanceledEvents.emit(Unit)
+            _systemMessages.emit("LOCAL: All operations canceled by user due to timeout.")
+        }
+    }
+
+    fun dismissTimeoutError() {
+        _lastTimeoutError.value = null
     }
 
     fun clearLogs() {

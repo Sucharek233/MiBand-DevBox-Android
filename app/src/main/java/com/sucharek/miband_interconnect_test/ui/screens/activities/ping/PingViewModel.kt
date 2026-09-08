@@ -45,6 +45,19 @@ class PingViewModel(
                 handlePingResponse(rawJson)
             }
         }
+
+        viewModelScope.launch {
+            watchViewModel.mailboxBusyEvents.collectLatest {
+                _isPinging.value = false
+                // Mark any pending pings as error/canceled
+                val currentPings = _pings.value.toMutableList()
+                val pendingIndex = currentPings.indexOfLast { it.status == PingStatus.PENDING }
+                if (pendingIndex != -1) {
+                    currentPings[pendingIndex] = currentPings[pendingIndex].copy(status = PingStatus.ERROR, errorMsg = "Canceled")
+                    _pings.value = currentPings
+                }
+            }
+        }
     }
 
     private fun StateFlow<Boolean>.asPingingStateFlow(): StateFlow<Boolean> = this
@@ -84,10 +97,13 @@ class PingViewModel(
                         androidEndTime = System.currentTimeMillis()
                     )
                     MessageStates.TIMEOUT -> pending.copy(status = PingStatus.TIMEOUT)
-                    else -> pending.copy(status = PingStatus.ERROR, errorMsg = json.optString("msg"))
+                    MessageStates.ERROR -> pending.copy(status = PingStatus.ERROR, errorMsg = json.optString("msg"))
+                    else -> null // Unknown state, don't update pending
                 }
-                currentPings[pendingIndex] = updated
-                _pings.value = currentPings
+                if (updated != null) {
+                    currentPings[pendingIndex] = updated
+                    _pings.value = currentPings
+                }
             }
             
             _isPinging.value = false

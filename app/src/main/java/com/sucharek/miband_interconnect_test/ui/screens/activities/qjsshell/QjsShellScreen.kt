@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -58,10 +59,15 @@ fun QjsShellScreen(
     val interactionSource = remember { MutableInteractionSource() }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(entries.size, codeInput.text) {
-        val totalItems = entries.size + 1
-        if (totalItems > 0) {
-            listState.animateScrollToItem(totalItems - 1)
+    // 1. Focus on start
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    // 2. Scroll when logs update
+    LaunchedEffect(entries.size) {
+        if (entries.isNotEmpty()) {
+            listState.animateScrollToItem(entries.size - 1)
         }
     }
 
@@ -116,7 +122,8 @@ fun QjsShellScreen(
                 SelectionContainer {
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 8.dp)
                     ) {
                         // 1. Log & Result Entries
                         items(entries) { entry ->
@@ -209,42 +216,48 @@ fun QjsShellScreen(
                             }
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
                         }
+                    }
+                }
+            }
 
-                        // 2. Interactive Input Prompt
-                        item {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                Text(
-                                    text = "> ",
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontSize = 12.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    lineHeight = 16.sp
-                                )
+            // Fixed Interactive Input Prompt
+            Surface(
+                color = MaterialTheme.colorScheme.background,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            text = "> ",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            lineHeight = 16.sp
+                        )
 
-                                BasicTextField(
-                                    value = displayValue,
-                                    onValueChange = { codeInput = it },
-                                    textStyle = TextStyle(
-                                        color = MaterialTheme.colorScheme.onBackground,
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 12.sp,
-                                        lineHeight = 16.sp
-                                    ),
-                                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                                    singleLine = false,
-                                    maxLines = 8,
-                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .focusRequester(focusRequester)
-                                )
-                            }
-                        }
+                        BasicTextField(
+                            value = displayValue,
+                            onValueChange = { codeInput = it },
+                            textStyle = TextStyle(
+                                color = MaterialTheme.colorScheme.onBackground,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp
+                            ),
+                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                            singleLine = false,
+                            maxLines = 8,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.None),
+                            modifier = Modifier
+                                .weight(1f)
+                                .focusRequester(focusRequester)
+                        )
                     }
                 }
             }
@@ -272,7 +285,7 @@ fun QjsShellScreen(
                                 }
                             },
                             contentPadding = PaddingValues(horizontal = 12.dp),
-                            modifier = Modifier.height(32.dp),
+                            modifier = Modifier.height(32.dp).focusProperties { canFocus = false },
                             shape = MaterialTheme.shapes.extraSmall
                         ) {
                             Text("▲", fontSize = 11.sp)
@@ -284,15 +297,18 @@ fun QjsShellScreen(
                                 }
                             },
                             contentPadding = PaddingValues(horizontal = 12.dp),
-                            modifier = Modifier.height(32.dp),
+                            modifier = Modifier.height(32.dp).focusProperties { canFocus = false },
                             shape = MaterialTheme.shapes.extraSmall
                         ) {
                             Text("▼", fontSize = 11.sp)
                         }
                         FilledTonalButton(
-                            onClick = { viewModel.clearConsole() },
+                            onClick = { 
+                                viewModel.clearConsole()
+                                focusRequester.requestFocus() 
+                            },
                             contentPadding = PaddingValues(horizontal = 12.dp),
-                            modifier = Modifier.height(32.dp),
+                            modifier = Modifier.height(32.dp).focusProperties { canFocus = false },
                             shape = MaterialTheme.shapes.extraSmall
                         ) {
                             Text("CLR", fontSize = 11.sp)
@@ -302,7 +318,7 @@ fun QjsShellScreen(
                     Button(
                         onClick = onSend,
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        modifier = Modifier.height(32.dp)
+                        modifier = Modifier.height(32.dp).focusProperties { canFocus = false }
                     ) {
                         Text(
                             text = "EVAL ↵",

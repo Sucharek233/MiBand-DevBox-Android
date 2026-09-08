@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -42,10 +43,15 @@ fun TerminalScreen(
     val interactionSource = remember { MutableInteractionSource() }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(logs.size, inputCommand.text) {
-        val itemCount = logs.size + 1
-        if (itemCount > 0) {
-            listState.animateScrollToItem(itemCount - 1)
+    // Focus on start
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    // Scroll when logs update
+    LaunchedEffect(logs.size) {
+        if (logs.isNotEmpty()) {
+            listState.animateScrollToItem(logs.size - 1)
         }
     }
 
@@ -100,7 +106,8 @@ fun TerminalScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    contentPadding = PaddingValues(bottom = 8.dp)
                 ) {
                     items(logs) { line ->
                         val textColor = when (line.type) {
@@ -120,38 +127,47 @@ fun TerminalScreen(
                             )
                         )
                     }
+                }
+            }
 
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "ap> ",
-                                style = TextStyle(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 13.sp
-                                )
+            // Fixed Input Field
+            Surface(
+                color = MaterialTheme.colorScheme.background,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "ap> ",
+                            style = TextStyle(
+                                color = MaterialTheme.colorScheme.primary,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 13.sp
                             )
+                        )
 
-                            BasicTextField(
-                                value = inputCommand,
-                                onValueChange = { inputCommand = it },
-                                textStyle = TextStyle(
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 13.sp
-                                ),
-                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                                keyboardActions = KeyboardActions(onSend = { onSend() }),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .focusRequester(focusRequester)
-                            )
-                        }
+                        BasicTextField(
+                            value = inputCommand,
+                            onValueChange = { inputCommand = it },
+                            textStyle = TextStyle(
+                                color = MaterialTheme.colorScheme.onBackground,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 13.sp
+                            ),
+                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                            keyboardActions = KeyboardActions(onSend = { onSend() }),
+                            modifier = Modifier
+                                .weight(1f)
+                                .focusRequester(focusRequester)
+                        )
                     }
                 }
             }
@@ -174,7 +190,7 @@ fun TerminalScreen(
                             }
                         },
                         contentPadding = PaddingValues(horizontal = 12.dp),
-                        modifier = Modifier.height(32.dp),
+                        modifier = Modifier.height(32.dp).focusProperties { canFocus = false },
                         shape = MaterialTheme.shapes.extraSmall
                     ) {
                         Text("▲", fontSize = 11.sp)
@@ -186,15 +202,18 @@ fun TerminalScreen(
                             }
                         },
                         contentPadding = PaddingValues(horizontal = 12.dp),
-                        modifier = Modifier.height(32.dp),
+                        modifier = Modifier.height(32.dp).focusProperties { canFocus = false },
                         shape = MaterialTheme.shapes.extraSmall
                     ) {
                         Text("▼", fontSize = 11.sp)
                     }
                     FilledTonalButton(
-                        onClick = { viewModel.clearScreen() },
+                        onClick = { 
+                            viewModel.clearScreen()
+                            focusRequester.requestFocus()
+                        },
                         contentPadding = PaddingValues(horizontal = 12.dp),
-                        modifier = Modifier.height(32.dp),
+                        modifier = Modifier.height(32.dp).focusProperties { canFocus = false },
                         shape = MaterialTheme.shapes.extraSmall
                     ) {
                         Text("CLR", fontSize = 11.sp)
@@ -204,7 +223,7 @@ fun TerminalScreen(
                 Button(
                     onClick = onSend,
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                    modifier = Modifier.height(32.dp)
+                    modifier = Modifier.height(32.dp).focusProperties { canFocus = false }
                 ) {
                     Text(
                         text = "RUN",

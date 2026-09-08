@@ -57,6 +57,9 @@ class FileExplorerViewModel(
     private var downloadItem: FileItem? = null
     private var downloadDirectoryUri: Uri? = null
     
+    private var lastLuaSizeKB = 500
+    private var lastJsSizeKB = 30
+    
     private var bytesDownloadedSoFar = 0L
     private var totalFileSize = 0L
     private var luaPreparedBytes = 0L
@@ -110,6 +113,13 @@ class FileExplorerViewModel(
 
     private fun handleGlobalError(msg: String) {
         _isLoading.value = false
+        
+        // Handle "Already streaming" (Global Error case)
+        if (msg == "Already streaming" && downloadItem != null && activeDownload.value is DownloadState.Connecting) {
+            triggerStreamRecovery()
+            return
+        }
+
         viewModelScope.launch { _operationStatus.emit("Error: $msg") }
         val current = _activeDownload.value
         if (current !is DownloadState.Idle && current !is DownloadState.RequestFolder && current !is DownloadState.Configure) {
@@ -148,6 +158,13 @@ class FileExplorerViewModel(
 
     private fun handleOperationError(error: String) {
         _isLoading.value = false
+        
+        // Handle "Already streaming" (App State Error case)
+        if (error == "Already streaming" && downloadItem != null && activeDownload.value is DownloadState.Connecting) {
+            triggerStreamRecovery()
+            return
+        }
+
         viewModelScope.launch { _operationStatus.emit("Error: $error") }
         
         val current = _activeDownload.value
@@ -155,6 +172,24 @@ class FileExplorerViewModel(
             val fileName = downloadItem?.name ?: "Unknown"
             _activeDownload.value = DownloadState.Error(fileName, error)
             cleanupDownload()
+        }
+    }
+
+    private fun triggerStreamRecovery() {
+        val item = downloadItem ?: return
+        viewModelScope.launch {
+            _operationStatus.emit("Resetting stale stream on band...")
+            // 1. Send stop
+            sendIoRequest(JSONObject().apply { put("type", "stop") })
+            // 2. Short delay to let Lua process the stop
+            kotlinx.coroutines.delay(500)
+            // 3. Retry the getStream (preserving original chunk sizes)
+            sendIoRequest(JSONObject().apply {
+                put("type", "getStream")
+                put("path", item.fullPath)
+                put("lSize", lastLuaSizeKB * 1024)
+                put("qSize", lastJsSizeKB * 1024)
+            })
         }
     }
 
@@ -265,6 +300,8 @@ class FileExplorerViewModel(
 
     fun startDownload(item: FileItem, luaChunkSizeKB: Int, jsChunkSizeKB: Int) {
         downloadItem = item
+        lastLuaSizeKB = luaChunkSizeKB
+        lastJsSizeKB = jsChunkSizeKB
         _activeDownload.value = DownloadState.Connecting(item.name)
         
         sendIoRequest(JSONObject().apply {

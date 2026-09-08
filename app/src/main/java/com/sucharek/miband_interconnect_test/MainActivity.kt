@@ -12,10 +12,25 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -76,6 +91,41 @@ class MainActivity : ComponentActivity() {
                     // it persists cleanly across screen swaps.
                     val watchViewModel: WatchViewModel = viewModel {
                         WatchViewModel(deviceManager)
+                    }
+
+                    val slowOp by watchViewModel.longRunningOperation.collectAsState()
+                    val bandTimeout by watchViewModel.lastTimeoutError.collectAsState()
+
+                    if (slowOp != null) {
+                        AlertDialog(
+                            onDismissRequest = { /* Don't dismiss by clicking outside */ },
+                            title = { Text("Action taking too long") },
+                            text = {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                                    Text("This is taking longer than usual... Tracking '$slowOp' operation.")
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(onClick = { watchViewModel.cancelActiveOperation() }) {
+                                    Text("Cancel Action")
+                                }
+                            }
+                        )
+                    }
+
+                    if (bandTimeout != null) {
+                        AlertDialog(
+                            onDismissRequest = { watchViewModel.dismissTimeoutError() },
+                            title = { Text("Band Timeout") },
+                            text = { Text(bandTimeout!!) },
+                            confirmButton = {
+                                Button(onClick = { watchViewModel.dismissTimeoutError() }) {
+                                    Text("OK")
+                                }
+                            }
+                        )
                     }
 
                     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -243,6 +293,7 @@ class MainActivity : ComponentActivity() {
                                 }
                                 SensorChartScreen(
                                     viewModel = sensorsViewModel,
+                                    watchViewModel = watchViewModel,
                                     sensorName = sensorChart.sensorName,
                                     onBack = { navController.popBackStack() }
                                 )
@@ -256,6 +307,7 @@ class MainActivity : ComponentActivity() {
                                 }
                                 SensorChartScreen(
                                     viewModel = sensorsViewModel,
+                                    watchViewModel = watchViewModel,
                                     sensorName = sensorChart.sensorName,
                                     onBack = { navController.popBackStack() }
                                 )

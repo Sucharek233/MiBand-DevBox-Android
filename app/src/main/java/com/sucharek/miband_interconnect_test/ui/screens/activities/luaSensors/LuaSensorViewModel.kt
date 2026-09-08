@@ -81,6 +81,12 @@ class LuaSensorViewModel(
             globalWatchViewModel.mailboxBusyEvents.collectLatest {
                 _isDiscovering.value = false
                 discoveryPhase = 0
+                // Reset connection state if mailbox times out
+                if (_subscriptionState.value == SubscriptionState.SUBSCRIBING || 
+                    _subscriptionState.value == SubscriptionState.UNSUBSCRIBING) {
+                    _subscriptionState.value = SubscriptionState.DISCONNECTED
+                    _activeSensor.value = null
+                }
             }
         }
 
