@@ -30,6 +30,8 @@ class AppDetailViewModel(
     val rawJson: StateFlow<String?> = details.map { it?.rawJson }
         .stateIn(viewModelScope, SharingStarted.Eagerly, details.value?.rawJson)
 
+    val isAnyAppOperationActive: StateFlow<Boolean> = repository.isAnyAppOperationActive
+
     init {
         viewModelScope.launch {
             globalWatchViewModel.mailboxBusyEvents.collectLatest {

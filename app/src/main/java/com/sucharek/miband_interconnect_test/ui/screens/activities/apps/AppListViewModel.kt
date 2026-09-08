@@ -12,6 +12,8 @@ class AppListViewModel(
     
     val appList: StateFlow<List<AppItem>> = repository.appList
     val isLoading: StateFlow<Boolean> = repository.isListLoading
+    val isAnyAppOperationActive: StateFlow<Boolean> = repository.isAnyAppOperationActive
+    val isAnyIconLoading: StateFlow<Boolean> = repository.isAnyIconLoading
 
     init {
         repository.fetchAppList(force = false)

@@ -26,6 +26,8 @@ class AppManifestViewModel(
     val isLoading: StateFlow<Boolean> = repository.loadingManifests.map { it.contains(packageName) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, repository.loadingManifests.value.contains(packageName))
 
+    val isAnyAppOperationActive: StateFlow<Boolean> = repository.isAnyAppOperationActive
+
     private val _saveStatus = MutableStateFlow<String?>(null) // null, "Saving...", "Saved", "Error"
     val saveStatus: StateFlow<String?> = _saveStatus.asStateFlow()
 

@@ -36,15 +36,18 @@ import dev.hossain.highlight.ui.rememberHighlightedCode
 import dev.hossain.highlight.ui.rememberSyntaxHighlightedEditorValue
 import dev.hossain.highlight.ui.LocalHighlightTheme
 import com.sucharek.miband_interconnect_test.ui.components.PureSyntaxHighlightedCode
+import com.sucharek.miband_interconnect_test.ui.screens.maindashboard.WatchViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHighlightApi::class)
 @Composable
 fun QjsShellScreen(
     viewModel: QjsShellViewModel,
+    watchViewModel: WatchViewModel,
     modifier: Modifier = Modifier
 ) {
     var codeInput by remember { mutableStateOf(TextFieldValue("")) }
     val entries by viewModel.entries.collectAsState()
+    val isBusy by watchViewModel.isAnyOperationActive.collectAsState()
     
     val theme = LocalHighlightTheme.current
     
@@ -72,7 +75,7 @@ fun QjsShellScreen(
     }
 
     val onSend = {
-        if (codeInput.text.isNotBlank()) {
+        if (codeInput.text.isNotBlank() && !isBusy) {
             val code = codeInput.text
             codeInput = TextFieldValue("")
             viewModel.evaluateJsCode(code)
@@ -318,7 +321,8 @@ fun QjsShellScreen(
                     Button(
                         onClick = onSend,
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        modifier = Modifier.height(32.dp).focusProperties { canFocus = false }
+                        modifier = Modifier.height(32.dp).focusProperties { canFocus = false },
+                        enabled = !isBusy
                     ) {
                         Text(
                             text = "EVAL ↵",

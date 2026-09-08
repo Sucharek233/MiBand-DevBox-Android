@@ -38,6 +38,7 @@ fun AppDetailScreen(
 ) {
     val details by viewModel.details.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isAnyAppOperationActive by viewModel.isAnyAppOperationActive.collectAsState()
     val rawJson by viewModel.rawJson.collectAsState()
 
     Scaffold(
@@ -65,7 +66,7 @@ fun AppDetailScreen(
 
                 IconButton(
                     onClick = { viewModel.fetchDetails(force = true) },
-                    enabled = !isLoading
+                    enabled = !isAnyAppOperationActive
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
@@ -100,7 +101,8 @@ fun AppDetailScreen(
                                 DetailAppIcon(
                                     iconBase64 = app.iconBase64,
                                     isLoading = app.isIconLoading,
-                                    onClick = { viewModel.fetchIcon() }
+                                    onClick = { viewModel.fetchIcon() },
+                                    isAnyAppOperationActive = isAnyAppOperationActive
                                 )
 
                                 Spacer(modifier = Modifier.width(16.dp))
@@ -122,7 +124,8 @@ fun AppDetailScreen(
                         Button(
                             onClick = onEditManifest,
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                            enabled = !isAnyAppOperationActive
                         ) {
                             Icon(Icons.Default.Edit, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
@@ -196,7 +199,8 @@ private fun LoadingOverlay() {
 private fun DetailAppIcon(
     iconBase64: String?,
     isLoading: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isAnyAppOperationActive: Boolean
 ) {
     Surface(
         modifier = Modifier
@@ -205,7 +209,7 @@ private fun DetailAppIcon(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
         onClick = { if (iconBase64 == null) onClick() },
-        enabled = !isLoading
+        enabled = !isLoading && !isAnyAppOperationActive
     ) {
         Box(contentAlignment = Alignment.Center) {
             if (isLoading) {

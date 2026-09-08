@@ -22,15 +22,18 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sucharek.miband_interconnect_test.ui.screens.maindashboard.WatchViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.qjsshell.JsonTreeItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModuleCompatibilityScreen(
     viewModel: ModuleCompatibilityViewModel,
+    watchViewModel: WatchViewModel,
     modifier: Modifier = Modifier
 ) {
     val modules by viewModel.modules.collectAsState()
+    val isBusy by watchViewModel.isAnyOperationActive.collectAsState()
     var customInput by remember { mutableStateOf("") }
     
     val listState = rememberLazyListState()
@@ -68,7 +71,8 @@ fun ModuleCompatibilityScreen(
 
                 Button(
                     onClick = { viewModel.testSelectedCompat() },
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    enabled = !isBusy
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
@@ -93,7 +97,8 @@ fun ModuleCompatibilityScreen(
                             item = item,
                             onToggleSelect = { viewModel.toggleSelection(item.name) },
                             onCheckCompat = { viewModel.testSingleCompat(item.name) },
-                            onToggleExpand = { viewModel.fetchFunctions(item.name) }
+                            onToggleExpand = { viewModel.fetchFunctions(item.name) },
+                            isBusy = isBusy
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
                     }
@@ -136,7 +141,8 @@ fun ModuleCompatibilityScreen(
                                 customInput = ""
                             }
                         },
-                        modifier = Modifier.background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
+                        modifier = Modifier.background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp)),
+                        enabled = !isBusy
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -155,7 +161,8 @@ private fun ModuleCardRow(
     item: ModuleItem,
     onToggleSelect: () -> Unit,
     onCheckCompat: () -> Unit,
-    onToggleExpand: () -> Unit
+    onToggleExpand: () -> Unit,
+    isBusy: Boolean
 ) {
     val isSupported = item.status == CompatStatus.SUPPORTED
     val isUnsupported = item.status == CompatStatus.UNSUPPORTED
@@ -175,7 +182,8 @@ private fun ModuleCardRow(
         ) {
             Checkbox(
                 checked = item.isSelected,
-                onCheckedChange = { onToggleSelect() }
+                onCheckedChange = { onToggleSelect() },
+                enabled = !isBusy
             )
 
             Text(
@@ -186,13 +194,13 @@ private fun ModuleCardRow(
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { onCheckCompat() }
+                    .clickable(enabled = !isBusy) { onCheckCompat() }
             )
 
             // Status Badge
             when (item.status) {
                 CompatStatus.UNKNOWN -> {
-                    TextButton(onClick = onCheckCompat) {
+                    TextButton(onClick = onCheckCompat, enabled = !isBusy) {
                         Text("Check", color = MaterialTheme.colorScheme.outline, fontSize = 11.sp)
                     }
                 }
@@ -237,7 +245,7 @@ private fun ModuleCardRow(
             // Inspect Functions Action
             IconButton(
                 onClick = onToggleExpand,
-                enabled = isSupported
+                enabled = isSupported && !isBusy
             ) {
                 if (item.isLoadingFuncs) {
                     CircularProgressIndicator(

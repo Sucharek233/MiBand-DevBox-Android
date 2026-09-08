@@ -6,10 +6,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -41,8 +45,20 @@ class AppsRepository(
     private val _loadingIcons = MutableStateFlow<Set<String>>(emptySet())
     val loadingIcons: StateFlow<Set<String>> = _loadingIcons.asStateFlow()
 
+    val isAnyIconLoading: StateFlow<Boolean> = _loadingIcons.map { it.isNotEmpty() }
+        .stateIn(scope, SharingStarted.WhileSubscribed(), false)
+
     private val _loadingManifests = MutableStateFlow<Set<String>>(emptySet())
     val loadingManifests: StateFlow<Set<String>> = _loadingManifests.asStateFlow()
+
+    val isAnyAppOperationActive: StateFlow<Boolean> = combine(
+        _isListLoading,
+        _loadingInfo,
+        _loadingIcons,
+        _loadingManifests
+    ) { list, info, icons, manifests ->
+        list || info.isNotEmpty() || icons.isNotEmpty() || manifests.isNotEmpty()
+    }.stateIn(scope, SharingStarted.WhileSubscribed(), false)
 
     private val _saveEvents = MutableSharedFlow<Pair<String, Boolean>>(extraBufferCapacity = 1)
     val saveEvents: SharedFlow<Pair<String, Boolean>> = _saveEvents.asSharedFlow()
@@ -73,6 +89,7 @@ class AppsRepository(
     }
 
     fun fetchAppList(force: Boolean = false) {
+        if (_isListLoading.value || isAnyAppOperationActive.value) return
         if (!force && _appList.value.isNotEmpty()) return
 
         _isListLoading.value = true
@@ -83,6 +100,7 @@ class AppsRepository(
     }
 
     fun fetchDetails(packageName: String, force: Boolean = false) {
+        if (isAnyAppOperationActive.value) return
         if (!force && _appDetailsCache.value.containsKey(packageName)) return
 
         _loadingInfo.update { it + packageName }
@@ -96,6 +114,8 @@ class AppsRepository(
     }
 
     fun fetchIcon(packageName: String) {
+        if (isAnyAppOperationActive.value) return
+
         lastRequestedIconPkg = packageName
         _loadingIcons.update { it + packageName }
         // Mark as loading in both list and cache
@@ -119,6 +139,7 @@ class AppsRepository(
     }
 
     fun fetchManifest(packageName: String, force: Boolean = false) {
+        if (isAnyAppOperationActive.value) return
         if (!force && _manifestCache.value.containsKey(packageName)) return
 
         lastRequestedManifestPkg = packageName

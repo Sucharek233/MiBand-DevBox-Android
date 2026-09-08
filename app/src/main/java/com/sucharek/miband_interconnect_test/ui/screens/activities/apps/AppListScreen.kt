@@ -33,6 +33,7 @@ fun AppListScreen(
 ) {
     val appList by viewModel.appList.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isAnyAppOperationActive by viewModel.isAnyAppOperationActive.collectAsState()
     
     val listState = rememberLazyListState()
 
@@ -60,7 +61,7 @@ fun AppListScreen(
 
                 IconButton(
                     onClick = { viewModel.fetchAppList() },
-                    enabled = !isLoading
+                    enabled = !isAnyAppOperationActive
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
@@ -85,7 +86,8 @@ fun AppListScreen(
                         AppItemRow(
                             app = app,
                             onDownloadIcon = { viewModel.fetchIcon(app.packageName) },
-                            onClick = { onAppClick(app) }
+                            onClick = { onAppClick(app) },
+                            isAnyAppOperationActive = isAnyAppOperationActive
                         )
                     }
                 }
@@ -102,13 +104,14 @@ fun AppListScreen(
 private fun AppItemRow(
     app: AppItem,
     onDownloadIcon: () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isAnyAppOperationActive: Boolean
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .clickable { onClick() },
+            .clickable(enabled = !isAnyAppOperationActive) { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
@@ -123,7 +126,8 @@ private fun AppItemRow(
             AppIcon(
                 iconBase64 = app.iconBase64,
                 isLoading = app.isIconLoading,
-                onClick = onDownloadIcon
+                onClick = onDownloadIcon,
+                isAnyAppOperationActive = isAnyAppOperationActive
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -148,12 +152,13 @@ private fun AppItemRow(
 private fun AppIcon(
     iconBase64: String?,
     isLoading: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isAnyAppOperationActive: Boolean
 ) {
     Surface(
         modifier = Modifier
             .size(48.dp)
-            .clickable(enabled = !isLoading && iconBase64 == null) { onClick() },
+            .clickable(enabled = !isLoading && !isAnyAppOperationActive && iconBase64 == null) { onClick() },
         shape = RoundedCornerShape(10.dp),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {

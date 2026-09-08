@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sucharek.miband_interconnect_test.ui.screens.maindashboard.WatchViewModel
 import com.sucharek.miband_interconnect_test.ui.screens.activities.sensors.StreamStatusChip
 import com.sucharek.miband_interconnect_test.ui.screens.activities.sensors.SubscriptionState
 import com.sucharek.miband_interconnect_test.ui.screens.activities.sensors.SensorAvailability
@@ -35,12 +36,14 @@ import com.sucharek.miband_interconnect_test.ui.screens.activities.sensors.Senso
 @Composable
 fun LuaSensorScreen(
     viewModel: LuaSensorViewModel = viewModel(),
+    watchViewModel: WatchViewModel,
     onBack: () -> Unit,
     onSensorSubscribed: (String) -> Unit
 ) {
     val predefinedSensors by viewModel.predefinedSensors.collectAsState()
     val allSensors by viewModel.allSensors.collectAsState()
     val isDiscovering by viewModel.isDiscovering.collectAsState()
+    val isBusy by watchViewModel.isAnyOperationActive.collectAsState()
     val activeSensor by viewModel.activeSensor.collectAsState()
     val pendingSensor by viewModel.pendingSensor.collectAsState()
     val subscriptionState by viewModel.subscriptionState.collectAsState()
@@ -102,7 +105,7 @@ fun LuaSensorScreen(
 
                     IconButton(
                         onClick = { viewModel.discoverSensors() },
-                        enabled = !isDiscovering
+                        enabled = !isBusy
                     ) {
                         if (isDiscovering) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
@@ -181,7 +184,8 @@ fun LuaSensorScreen(
                     LuaSensorItemRow(
                         sensor = sensor,
                         isActive = activeSensor?.id == sensor.id,
-                        onClick = { viewModel.setPendingSensor(sensor) }
+                        onClick = { viewModel.setPendingSensor(sensor) },
+                        enabled = !isBusy
                     )
                 }
             }
@@ -203,7 +207,8 @@ fun LuaSensorScreen(
                 viewModel.subscribeTo(sensor)
                 onSensorSubscribed(sensor.name)
             },
-            onDismiss = { viewModel.setPendingSensor(null) }
+            onDismiss = { viewModel.setPendingSensor(null) },
+            isBusy = isBusy
         )
     }
 }
@@ -219,7 +224,8 @@ fun LuaSensorConfigDialog(
     onUseKnownChange: (Boolean) -> Unit,
     onSliderChange: (Float) -> Unit,
     onSubscribe: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isBusy: Boolean
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -233,7 +239,8 @@ fun LuaSensorConfigDialog(
                     sliderValue = sliderValue,
                     onProviderChange = onProviderChange,
                     onUseKnownChange = onUseKnownChange,
-                    onSliderChange = onSliderChange
+                    onSliderChange = onSliderChange,
+                    isBusy = isBusy
                 )
                 
                 if (provider == LuaSensorProvider.TOPIC) {
@@ -255,7 +262,7 @@ fun LuaSensorConfigDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onSubscribe) {
+            Button(onClick = onSubscribe, enabled = !isBusy) {
                 Text("Subscribe")
             }
         },
@@ -275,7 +282,8 @@ fun LuaSensorSettings(
     sliderValue: Float,
     onProviderChange: (LuaSensorProvider) -> Unit,
     onUseKnownChange: (Boolean) -> Unit,
-    onSliderChange: (Float) -> Unit
+    onSliderChange: (Float) -> Unit,
+    isBusy: Boolean
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text("Stream Settings", style = MaterialTheme.typography.titleSmall)
@@ -289,7 +297,8 @@ fun LuaSensorSettings(
                     selected = provider == p,
                     onClick = { onProviderChange(p) },
                     label = { Text(p.name) },
-                    modifier = Modifier.padding(start = 4.dp)
+                    modifier = Modifier.padding(start = 4.dp),
+                    enabled = !isBusy
                 )
             }
         }
@@ -297,7 +306,7 @@ fun LuaSensorSettings(
         if (provider == LuaSensorProvider.FILE) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Use Known Props:", modifier = Modifier.weight(1f))
-                Switch(checked = useKnown, onCheckedChange = onUseKnownChange)
+                Switch(checked = useKnown, onCheckedChange = onUseKnownChange, enabled = !isBusy)
             }
         }
         
@@ -309,7 +318,8 @@ fun LuaSensorSettings(
                 value = sliderValue,
                 onValueChange = onSliderChange,
                 valueRange = 0f..1f,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isBusy
             )
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("50ms", style = MaterialTheme.typography.labelSmall)
@@ -329,12 +339,13 @@ fun ColorScheme.onWarningContainer() = Color(0xFF663C00)
 fun LuaSensorItemRow(
     sensor: LuaSensorInfo,
     isActive: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .clickable(enabled = enabled) { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
         )

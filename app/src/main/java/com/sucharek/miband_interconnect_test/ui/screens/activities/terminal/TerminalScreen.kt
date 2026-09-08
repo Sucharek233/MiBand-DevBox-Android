@@ -28,15 +28,18 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sucharek.miband_interconnect_test.ui.screens.maindashboard.WatchViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TerminalScreen(
     viewModel: TerminalViewModel,
+    watchViewModel: WatchViewModel,
     modifier: Modifier = Modifier
 ) {
     var inputCommand by remember { mutableStateOf(TextFieldValue("")) }
     val logs by viewModel.terminalLogs.collectAsState()
+    val isBusy by watchViewModel.isAnyOperationActive.collectAsState()
 
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
@@ -56,7 +59,7 @@ fun TerminalScreen(
     }
 
     val onSend = {
-        if (inputCommand.text.isNotBlank()) {
+        if (inputCommand.text.isNotBlank() && !isBusy) {
             val cmd = inputCommand.text
             inputCommand = TextFieldValue("")
             viewModel.executeCommand(cmd)
@@ -223,7 +226,8 @@ fun TerminalScreen(
                 Button(
                     onClick = onSend,
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                    modifier = Modifier.height(32.dp).focusProperties { canFocus = false }
+                    modifier = Modifier.height(32.dp).focusProperties { canFocus = false },
+                    enabled = !isBusy
                 ) {
                     Text(
                         text = "RUN",

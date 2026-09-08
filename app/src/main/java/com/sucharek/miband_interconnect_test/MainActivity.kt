@@ -97,6 +97,7 @@ class MainActivity : ComponentActivity() {
 
                     val slowOp by watchViewModel.longRunningOperation.collectAsState()
                     val bandTimeout by watchViewModel.lastTimeoutError.collectAsState()
+                    val mailboxBusy by watchViewModel.isMailboxBusyError.collectAsState()
 
                     if (slowOp != null) {
                         AlertDialog(
@@ -124,6 +125,19 @@ class MainActivity : ComponentActivity() {
                             text = { Text(bandTimeout!!) },
                             confirmButton = {
                                 Button(onClick = { watchViewModel.dismissTimeoutError() }) {
+                                    Text("OK")
+                                }
+                            }
+                        )
+                    }
+
+                    if (mailboxBusy) {
+                        AlertDialog(
+                            onDismissRequest = { watchViewModel.dismissMailboxBusyError() },
+                            title = { Text("You're going too fast...") },
+                            text = { Text("The band is currently busy processing your requests. Please wait a moment before sending another command.") },
+                            confirmButton = {
+                                Button(onClick = { watchViewModel.dismissMailboxBusyError() }) {
                                     Text("OK")
                                 }
                             }
@@ -167,7 +181,7 @@ class MainActivity : ComponentActivity() {
                                 val terminalViewModel: TerminalViewModel = viewModel(viewModelStoreOwner = activity) {
                                     TerminalViewModel(watchViewModel)
                                 }
-                                TerminalScreen(viewModel = terminalViewModel)
+                                TerminalScreen(viewModel = terminalViewModel, watchViewModel = watchViewModel)
                             }
 
                             // File explorer
@@ -185,7 +199,7 @@ class MainActivity : ComponentActivity() {
                                 val jsViewModel: QjsShellViewModel = viewModel(viewModelStoreOwner = activity) {
                                     QjsShellViewModel(watchViewModel)
                                 }
-                                QjsShellScreen(viewModel = jsViewModel)
+                                QjsShellScreen(viewModel = jsViewModel, watchViewModel = watchViewModel)
                             }
 
                             // Device Info
@@ -194,7 +208,7 @@ class MainActivity : ComponentActivity() {
                                 val deviceViewModel: DeviceViewModel = viewModel(viewModelStoreOwner = activity) {
                                     DeviceViewModel(watchViewModel)
                                 }
-                                DeviceScreen(viewModel = deviceViewModel)
+                                DeviceScreen(viewModel = deviceViewModel, watchViewModel = watchViewModel)
                             }
 
                             // Lua shell
@@ -203,7 +217,7 @@ class MainActivity : ComponentActivity() {
                                 val luaViewModel: LuaShellViewModel = viewModel(viewModelStoreOwner = activity) {
                                     LuaShellViewModel(watchViewModel)
                                 }
-                                LuaShellScreen(viewModel = luaViewModel)
+                                LuaShellScreen(viewModel = luaViewModel, watchViewModel = watchViewModel)
                             }
 
                             // Lua SysInfo
@@ -221,7 +235,7 @@ class MainActivity : ComponentActivity() {
                                 val modulesViewModel: ModuleCompatibilityViewModel = viewModel(viewModelStoreOwner = activity) {
                                     ModuleCompatibilityViewModel(watchViewModel)
                                 }
-                                ModuleCompatibilityScreen(viewModel = modulesViewModel)
+                                ModuleCompatibilityScreen(viewModel = modulesViewModel, watchViewModel = watchViewModel)
                             }
 
                             // Sensors
@@ -253,6 +267,7 @@ class MainActivity : ComponentActivity() {
                                 }
                                 LuaSensorScreen(
                                     viewModel = sensorsViewModel,
+                                    watchViewModel = watchViewModel,
                                     onBack = { navController.popBackStack() },
                                     onSensorSubscribed = { sensorName ->
                                         navController.navigate(Screen.LuaSensorChart(sensorName))

@@ -29,6 +29,7 @@ fun AppManifestScreen(
 ) {
     val manifestContent by viewModel.manifestContent.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isAnyAppOperationActive by viewModel.isAnyAppOperationActive.collectAsState()
     val saveStatus by viewModel.saveStatus.collectAsState()
 
     var editableContent by remember { mutableStateOf(TextFieldValue(manifestContent)) }
@@ -95,7 +96,7 @@ fun AppManifestScreen(
                             editableContent = TextFieldValue("") // Clear local state to allow overwrite by incoming refresh
                             viewModel.refresh() 
                         },
-                        enabled = !isLoading && !isSaving
+                        enabled = !isAnyAppOperationActive && !isSaving
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -108,7 +109,7 @@ fun AppManifestScreen(
                     
                     Button(
                         onClick = { viewModel.saveManifest(editableContent.text) },
-                        enabled = !isLoading && !isSaving && editableContent.text.isNotEmpty(),
+                        enabled = !isAnyAppOperationActive && !isSaving && editableContent.text.isNotEmpty(),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                         modifier = Modifier.height(36.dp)
                     ) {

@@ -14,15 +14,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sucharek.miband_interconnect_test.ui.screens.maindashboard.WatchViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceScreen(
-    viewModel: DeviceViewModel
+    viewModel: DeviceViewModel,
+    watchViewModel: WatchViewModel
 ) {
     val deviceInfo by viewModel.deviceInfo.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isBusy by watchViewModel.isAnyOperationActive.collectAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -48,7 +51,7 @@ fun DeviceScreen(
 
                 IconButton(
                     onClick = { viewModel.refresh() },
-                    enabled = !isLoading
+                    enabled = !isBusy
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)

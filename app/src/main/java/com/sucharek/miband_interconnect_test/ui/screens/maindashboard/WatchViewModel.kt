@@ -106,8 +106,14 @@ class WatchViewModel(
     private val _longRunningOperation = MutableStateFlow<String?>(null)
     val longRunningOperation: StateFlow<String?> = _longRunningOperation.asStateFlow()
 
+    private val _isAnyOperationActive = MutableStateFlow(false)
+    val isAnyOperationActive: StateFlow<Boolean> = _isAnyOperationActive.asStateFlow()
+
     private val _lastTimeoutError = MutableStateFlow<String?>(null)
     val lastTimeoutError: StateFlow<String?> = _lastTimeoutError.asStateFlow()
+
+    private val _isMailboxBusyError = MutableStateFlow(false)
+    val isMailboxBusyError: StateFlow<Boolean> = _isMailboxBusyError.asStateFlow()
 
     private val activeOperations = mutableMapOf<String, Long>()
     private var timeoutJob: Job? = null
@@ -238,11 +244,16 @@ class WatchViewModel(
 
                 // 1. Clear tracking for any terminal state (Done, Error, or Timeout)
                 if (state == MessageStates.DONE || state == MessageStates.ERROR || state == MessageStates.TIMEOUT) {
-                    val isGlobalTimeout = (state == MessageStates.ERROR || state == MessageStates.TIMEOUT) && 
-                        (errorMsg == "Mailbox timeout" || errorMsg == "Mailbox busy")
+                    val isMailboxBusy = errorMsg == "Mailbox busy"
+                    val isMailboxTimeout = errorMsg == "Mailbox timeout"
                     
-                    if (isGlobalTimeout) {
-                        _lastTimeoutError.value = "The band reported a timeout: $errorMsg"
+                    if (isMailboxBusy || isMailboxTimeout) {
+                        if (isMailboxBusy) {
+                            _isMailboxBusyError.value = true
+                        } else {
+                            _lastTimeoutError.value = "The band reported a timeout: $errorMsg"
+                        }
+                        
                         synchronized(activeOperations) {
                             activeOperations.clear()
                         }
@@ -352,6 +363,7 @@ class WatchViewModel(
     private fun startOperationTracking(type: String) {
         synchronized(activeOperations) {
             activeOperations[type] = System.currentTimeMillis()
+            _isAnyOperationActive.value = true
         }
         
         if (timeoutJob == null || timeoutJob?.isActive == false) {
@@ -376,6 +388,7 @@ class WatchViewModel(
     private fun clearOperationTracking(type: String) {
         synchronized(activeOperations) {
             activeOperations.remove(type)
+            _isAnyOperationActive.value = activeOperations.isNotEmpty()
         }
         if (_longRunningOperation.value == type) {
             _longRunningOperation.value = null
@@ -385,6 +398,7 @@ class WatchViewModel(
     fun cancelActiveOperation() {
         synchronized(activeOperations) {
             activeOperations.clear()
+            _isAnyOperationActive.value = false
         }
         _longRunningOperation.value = null
         
@@ -398,6 +412,10 @@ class WatchViewModel(
 
     fun dismissTimeoutError() {
         _lastTimeoutError.value = null
+    }
+
+    fun dismissMailboxBusyError() {
+        _isMailboxBusyError.value = false
     }
 
     fun clearLogs() {
