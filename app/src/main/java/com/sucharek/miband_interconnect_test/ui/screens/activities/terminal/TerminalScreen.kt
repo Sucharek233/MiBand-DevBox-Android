@@ -39,7 +39,7 @@ fun TerminalScreen(
 ) {
     var inputCommand by remember { mutableStateOf(TextFieldValue("")) }
     val logs by viewModel.terminalLogs.collectAsState()
-    val isBusy by watchViewModel.isAnyOperationActive.collectAsState()
+    val isBusy by watchViewModel.isLuaBusy.collectAsState()
 
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }

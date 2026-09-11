@@ -106,8 +106,14 @@ class WatchViewModel(
     private val _longRunningOperation = MutableStateFlow<String?>(null)
     val longRunningOperation: StateFlow<String?> = _longRunningOperation.asStateFlow()
 
-    private val _isAnyOperationActive = MutableStateFlow(false)
-    val isAnyOperationActive: StateFlow<Boolean> = _isAnyOperationActive.asStateFlow()
+    private val _isLuaBusy = MutableStateFlow(false)
+    val isLuaBusy: StateFlow<Boolean> = _isLuaBusy.asStateFlow()
+
+    private val _isJsBusy = MutableStateFlow(false)
+    val isJsBusy: StateFlow<Boolean> = _isJsBusy.asStateFlow()
+
+    @Deprecated("Use isLuaBusy or isJsBusy")
+    val isAnyOperationActive: StateFlow<Boolean> = _isLuaBusy.asStateFlow()
 
     private val _lastTimeoutError = MutableStateFlow<String?>(null)
     val lastTimeoutError: StateFlow<String?> = _lastTimeoutError.asStateFlow()
@@ -254,8 +260,11 @@ class WatchViewModel(
                             _lastTimeoutError.value = "The band reported a timeout: $errorMsg"
                         }
                         
+                        // Clear ONLY Lua operations as these are mailbox specific
                         synchronized(activeOperations) {
-                            activeOperations.clear()
+                            val keysToRemove = activeOperations.keys.filter { isLuaType(it) }
+                            keysToRemove.forEach { activeOperations.remove(it) }
+                            _isLuaBusy.value = activeOperations.keys.any { isLuaType(it) }
                         }
                         _longRunningOperation.value = null
                         // Block emission of this global error to specific feature flows
@@ -363,7 +372,8 @@ class WatchViewModel(
     private fun startOperationTracking(type: String) {
         synchronized(activeOperations) {
             activeOperations[type] = System.currentTimeMillis()
-            _isAnyOperationActive.value = true
+            if (isLuaType(type)) _isLuaBusy.value = true
+            else _isJsBusy.value = true
         }
         
         if (timeoutJob == null || timeoutJob?.isActive == false) {
@@ -388,7 +398,11 @@ class WatchViewModel(
     private fun clearOperationTracking(type: String) {
         synchronized(activeOperations) {
             activeOperations.remove(type)
-            _isAnyOperationActive.value = activeOperations.isNotEmpty()
+            if (isLuaType(type)) {
+                _isLuaBusy.value = activeOperations.keys.any { isLuaType(it) }
+            } else {
+                _isJsBusy.value = activeOperations.keys.any { !isLuaType(it) }
+            }
         }
         if (_longRunningOperation.value == type) {
             _longRunningOperation.value = null
@@ -398,7 +412,8 @@ class WatchViewModel(
     fun cancelActiveOperation() {
         synchronized(activeOperations) {
             activeOperations.clear()
-            _isAnyOperationActive.value = false
+            _isLuaBusy.value = false
+            _isJsBusy.value = false
         }
         _longRunningOperation.value = null
         
@@ -416,6 +431,11 @@ class WatchViewModel(
 
     fun dismissMailboxBusyError() {
         _isMailboxBusyError.value = false
+    }
+
+    private fun isLuaType(type: String): Boolean {
+        return type == "cmd" || type == "luashell" || type == "io" || 
+               type == "apps" || type == "sysInfoLua" || type == "sensorsLua"
     }
 
     fun clearLogs() {

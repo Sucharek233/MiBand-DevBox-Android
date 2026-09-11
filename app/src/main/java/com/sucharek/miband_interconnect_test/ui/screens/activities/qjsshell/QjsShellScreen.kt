@@ -47,7 +47,7 @@ fun QjsShellScreen(
 ) {
     var codeInput by remember { mutableStateOf(TextFieldValue("")) }
     val entries by viewModel.entries.collectAsState()
-    val isBusy by watchViewModel.isAnyOperationActive.collectAsState()
+    val isBusy by watchViewModel.isJsBusy.collectAsState()
     
     val theme = LocalHighlightTheme.current
     
