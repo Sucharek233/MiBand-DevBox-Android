@@ -14,11 +14,11 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.sucharek.miband_interconnect_test"
+    namespace = "com.sucharek.devbox"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.sucharek.miband_interconnect_test"
+        applicationId = "com.sucharek.devbox"
         minSdk = 24
         targetSdk = 37
         versionCode = 1

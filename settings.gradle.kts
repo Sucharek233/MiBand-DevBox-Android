@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "miband_interconnect_test"
+rootProject.name = "devbox"
 include(":app")
  
