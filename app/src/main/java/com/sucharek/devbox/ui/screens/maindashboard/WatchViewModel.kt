@@ -273,8 +273,9 @@ class WatchViewModel(
 
                 // 1. Clear tracking for any terminal state (Done, Error, or Timeout)
                 if (state == MessageStates.DONE || state == MessageStates.ERROR || state == MessageStates.TIMEOUT) {
-                    val isMailboxBusy = errorMsg == "Mailbox busy"
-                    val isMailboxTimeout = errorMsg == "Mailbox timeout"
+                    val msg = errorMsg.lowercase().trim()
+                    val isMailboxBusy = msg == "mailbox busy"
+                    val isMailboxTimeout = msg == "mailbox timeout"
                     
                     if (isMailboxBusy || isMailboxTimeout) {
                         if (isMailboxBusy) {
@@ -290,7 +291,11 @@ class WatchViewModel(
                             _isLuaBusy.value = activeOperations.keys.any { isLuaType(it) }
                         }
                         _longRunningOperation.value = null
-                        // Block emission of this global error to specific feature flows
+                        
+                        // Notify ViewModels to stop loading states
+                        _mailboxBusyEvents.emit(Unit)
+                        
+                        // Block emission of this global error to specific feature flows (Shells, etc.)
                         return@launch
                     } else {
                         clearOperationTracking(type)
@@ -299,12 +304,9 @@ class WatchViewModel(
 
                 // 2. Standard Error Handling for Logs
                 if (state == MessageStates.ERROR) {
-                    // Refined: Only log if it's NOT a global mailbox timeout (which was handled above)
+                    // Refined: Only log if it's NOT a global mailbox timeout
                     if (type != "interconnect" && errorMsg != "Mailbox timeout" && errorMsg != "Mailbox busy") {
                         _systemMessages.emit(message)
-                    }
-                    if (errorMsg == "Mailbox busy") {
-                        _mailboxBusyEvents.emit(Unit)
                     }
                 }
 
@@ -442,6 +444,7 @@ class WatchViewModel(
         
         // Also emit mailbox reset to let ViewModels know they should stop loading
         viewModelScope.launch {
+            // Emit reset FIRST so ViewModels update their state before navigation occurs
             _mailboxBusyEvents.emit(Unit)
             _operationCanceledEvents.emit(Unit)
             _systemMessages.emit("LOCAL: All operations canceled by user due to timeout.")

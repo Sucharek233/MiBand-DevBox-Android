@@ -6,6 +6,7 @@ import com.sucharek.devbox.ui.screens.maindashboard.WatchViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import com.sucharek.devbox.models.MessageStates
 
 data class PropItem(val key: String, val value: String)
 data class DiskPartition(
@@ -78,7 +79,7 @@ class LuaSysInfoViewModel(
             val appState = json.optString("appState")
             val res = json.opt("res")
 
-            if (appState == "error" || json.optString("state") == "error") {
+            if (appState == MessageStates.ERROR || json.optString("state") == MessageStates.ERROR) {
                 _error.value = res?.toString() ?: json.optString("msg", "Unknown error")
                 _isLoading.value = false
                 requestQueue.clear()
@@ -114,7 +115,7 @@ class LuaSysInfoViewModel(
                 _propsList.value = parsed
             }
 
-            if (requestQueue.isNotEmpty()) {
+            if (_isLoading.value && requestQueue.isNotEmpty()) {
                 val next = requestQueue.removeAt(0)
                 sendSingleRequest(next)
             } else {

@@ -52,11 +52,11 @@ fun SensorChartScreen(
     val tabs = listOf("Chart", "Raw Data")
 
     val currentSubscriptionState = rememberUpdatedState(subscriptionState)
-    var isNavigatingBackDueToCancel by remember { mutableStateOf(false) }
+    val isNavigatingBackDueToCancel = remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         watchViewModel.operationCanceledEvents.collect {
-            isNavigatingBackDueToCancel = true
+            isNavigatingBackDueToCancel.value = true
             onBack()
         }
     }
@@ -66,7 +66,7 @@ fun SensorChartScreen(
             val state = currentSubscriptionState.value
             val isConnected = state == SubscriptionState.SUBSCRIBED || state == SubscriptionState.SUBSCRIBING
             
-            if (isConnected && !isNavigatingBackDueToCancel) {
+            if (isConnected && !isNavigatingBackDueToCancel.value) {
                 viewModel.unsubscribeCurrent()
             }
         }

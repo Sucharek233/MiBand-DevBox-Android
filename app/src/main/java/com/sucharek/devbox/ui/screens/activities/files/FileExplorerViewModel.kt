@@ -77,6 +77,11 @@ class FileExplorerViewModel(
         viewModelScope.launch {
             globalWatchViewModel.mailboxBusyEvents.collectLatest {
                 _isLoading.value = false
+                // Reset connecting state on timeout
+                if (_activeDownload.value is DownloadState.Connecting) {
+                    _activeDownload.value = DownloadState.Idle
+                    cleanupDownload()
+                }
             }
         }
 
