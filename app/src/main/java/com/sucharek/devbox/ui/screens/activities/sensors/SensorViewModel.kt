@@ -72,7 +72,7 @@ class SensorViewModel(
             _isDiscovering.value = true
 
             val payload = JSONObject().apply {
-                put("req", "listLite")
+                put("type", "listLite")
             }
             globalWatchViewModel.sendStructuredMessage(
                 type = "sensors",
@@ -81,17 +81,19 @@ class SensorViewModel(
         }
     }
 
-    fun subscribeTo(sensorName: String) {
+    fun subscribeTo(sensorName: String, streamEntries: Int = 10, sendInterval: Int = 1000) {
         _activeSensor.value = sensorName
         _subscriptionState.value = SubscriptionState.SUBSCRIBING
         _lastError.value = null
         _incomingSamples.value = emptyList()
 
-        println("[SensorStream] ---> SUBSCRIBING TO: $sensorName")
+        println("[SensorStream] ---> SUBSCRIBING TO: $sensorName (entries: $streamEntries, interval: ${sendInterval}ms)")
 
         val payload = JSONObject().apply {
-            put("req", "sub")
+            put("type", "sub")
             put("sensor", sensorName)
+            put("streamEntries", streamEntries)
+            put("sendInterval", sendInterval)
         }
         globalWatchViewModel.sendStructuredMessage(
             type = "sensors",
@@ -105,7 +107,7 @@ class SensorViewModel(
 
         _subscriptionState.value = SubscriptionState.UNSUBSCRIBING
         val payload = JSONObject().apply {
-            put("req", "unsub")
+            put("type", "unsub")
         }
         globalWatchViewModel.sendStructuredMessage(
             type = "sensors",

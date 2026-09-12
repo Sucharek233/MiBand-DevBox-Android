@@ -32,6 +32,7 @@ fun SensorScreen(
     val activeSensor by viewModel.activeSensor.collectAsState()
     val subscriptionState by viewModel.subscriptionState.collectAsState()
 
+    var pendingConfigSensor by remember { mutableStateOf<SensorInfo?>(null) }
     var pendingUnavailableSensor by remember { mutableStateOf<SensorInfo?>(null) }
     
     val listState = rememberLazyListState(
@@ -112,8 +113,7 @@ fun SensorScreen(
                             if (sensor.availability == SensorAvailability.UNAVAILABLE) {
                                 pendingUnavailableSensor = sensor
                             } else {
-                                viewModel.subscribeTo(sensor.name)
-                                onSensorClick(sensor.name)
+                                pendingConfigSensor = sensor
                             }
                         }
                     )
@@ -136,8 +136,7 @@ fun SensorScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.subscribeTo(sensor.name)
-                        onSensorClick(sensor.name)
+                        pendingConfigSensor = sensor
                         pendingUnavailableSensor = null
                     }
                 ) {
@@ -151,6 +150,69 @@ fun SensorScreen(
             }
         )
     }
+
+    pendingConfigSensor?.let { sensor ->
+        SensorConfigDialog(
+            sensor = sensor,
+            onSubscribe = { entries, interval ->
+                viewModel.subscribeTo(sensor.name, entries, interval)
+                onSensorClick(sensor.name)
+                pendingConfigSensor = null
+            },
+            onDismiss = { pendingConfigSensor = null }
+        )
+    }
+}
+
+@Composable
+fun SensorConfigDialog(
+    sensor: SensorInfo,
+    onSubscribe: (entries: Int, interval: Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var streamEntries by remember { mutableStateOf(10f) }
+    var sendInterval by remember { mutableStateOf(1000f) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Configure ${sensor.name}") },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("Stream Settings", style = MaterialTheme.typography.titleSmall)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("Entries per Send: ${streamEntries.toInt()}", style = MaterialTheme.typography.bodyMedium)
+                Slider(
+                    value = streamEntries,
+                    onValueChange = { streamEntries = it },
+                    valueRange = 1f..50f,
+                    steps = 49,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("Send Interval: ${sendInterval.toInt()}ms", style = MaterialTheme.typography.bodyMedium)
+                Slider(
+                    value = sendInterval,
+                    onValueChange = { sendInterval = it },
+                    valueRange = 100f..5000f,
+                    steps = 49,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onSubscribe(streamEntries.toInt(), sendInterval.toInt()) }) {
+                Text("Subscribe")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable
