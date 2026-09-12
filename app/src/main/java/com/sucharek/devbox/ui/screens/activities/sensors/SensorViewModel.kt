@@ -43,6 +43,7 @@ class SensorViewModel(
     var scrollOffset = 0
 
     private var scanJob: Job? = null
+    private var hasDiscovered = false
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
@@ -70,6 +71,7 @@ class SensorViewModel(
         scanJob?.cancel()
         scanJob = viewModelScope.launch {
             _isDiscovering.value = true
+            hasDiscovered = true
 
             val payload = JSONObject().apply {
                 put("type", "listLite")
@@ -78,6 +80,12 @@ class SensorViewModel(
                 type = "sensors",
                 args = payload
             )
+        }
+    }
+
+    fun discoverIfNeeded() {
+        if (!hasDiscovered && !isDiscovering.value) {
+            discoverSensors()
         }
     }
 

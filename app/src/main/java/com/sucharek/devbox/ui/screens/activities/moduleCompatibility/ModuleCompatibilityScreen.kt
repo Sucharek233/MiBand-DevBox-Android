@@ -44,6 +44,13 @@ fun ModuleCompatibilityScreen(
         }
     }
 
+    // Automatically trigger a check if not done
+    LaunchedEffect(Unit) {
+        if (modules.all { it.status == CompatStatus.UNKNOWN }) {
+            viewModel.testSelectedCompat()
+        }
+    }
+
     Scaffold(
         modifier = modifier
     ) { innerPadding ->

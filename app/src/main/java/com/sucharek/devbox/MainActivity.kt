@@ -242,6 +242,7 @@ class MainActivity : ComponentActivity() {
                                 }
                                 SensorScreen(
                                     viewModel = sensorsViewModel,
+                                    watchViewModel = watchViewModel,
                                     onSensorClick = { sensorName ->
                                         navController.navigate(Screen.SensorChart(sensorName))
                                     }

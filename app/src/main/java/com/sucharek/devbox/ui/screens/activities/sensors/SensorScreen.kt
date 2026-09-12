@@ -20,10 +20,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sucharek.devbox.ui.screens.maindashboard.WatchViewModel
 
 @Composable
 fun SensorScreen(
     viewModel: SensorViewModel = viewModel(),
+    watchViewModel: WatchViewModel,
     onSensorClick: (String) -> Unit
 ) {
     val sensorList by viewModel.sensorList.collectAsState()
@@ -31,10 +33,16 @@ fun SensorScreen(
     val scanProgress by viewModel.scanProgress.collectAsState()
     val activeSensor by viewModel.activeSensor.collectAsState()
     val subscriptionState by viewModel.subscriptionState.collectAsState()
+    val isBusy by watchViewModel.isJsBusy.collectAsState()
 
     var pendingConfigSensor by remember { mutableStateOf<SensorInfo?>(null) }
     var pendingUnavailableSensor by remember { mutableStateOf<SensorInfo?>(null) }
     
+    // Automatically trigger a scan if needed
+    LaunchedEffect(Unit) {
+        viewModel.discoverIfNeeded()
+    }
+
     val listState = rememberLazyListState(
         initialFirstVisibleItemIndex = viewModel.scrollIndex,
         initialFirstVisibleItemScrollOffset = viewModel.scrollOffset
@@ -76,7 +84,7 @@ fun SensorScreen(
 
                     IconButton(
                         onClick = { viewModel.discoverSensors() },
-                        enabled = !isDiscovering
+                        enabled = !isBusy
                     ) {
                         if (isDiscovering) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
@@ -115,7 +123,8 @@ fun SensorScreen(
                             } else {
                                 pendingConfigSensor = sensor
                             }
-                        }
+                        },
+                        enabled = !isBusy
                     )
                 }
             }
@@ -159,7 +168,8 @@ fun SensorScreen(
                 onSensorClick(sensor.name)
                 pendingConfigSensor = null
             },
-            onDismiss = { pendingConfigSensor = null }
+            onDismiss = { pendingConfigSensor = null },
+            isBusy = isBusy
         )
     }
 }
@@ -168,10 +178,11 @@ fun SensorScreen(
 fun SensorConfigDialog(
     sensor: SensorInfo,
     onSubscribe: (entries: Int, interval: Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isBusy: Boolean
 ) {
-    var streamEntries by remember { mutableStateOf(10f) }
-    var sendInterval by remember { mutableStateOf(1000f) }
+    var streamEntries by remember { mutableFloatStateOf(10f) }
+    var sendInterval by remember { mutableFloatStateOf(1000f) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -187,7 +198,8 @@ fun SensorConfigDialog(
                     onValueChange = { streamEntries = it },
                     valueRange = 1f..50f,
                     steps = 49,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isBusy
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -198,12 +210,13 @@ fun SensorConfigDialog(
                     onValueChange = { sendInterval = it },
                     valueRange = 100f..5000f,
                     steps = 49,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isBusy
                 )
             }
         },
         confirmButton = {
-            Button(onClick = { onSubscribe(streamEntries.toInt(), sendInterval.toInt()) }) {
+            Button(onClick = { onSubscribe(streamEntries.toInt(), sendInterval.toInt()) }, enabled = !isBusy) {
                 Text("Subscribe")
             }
         },
@@ -219,12 +232,13 @@ fun SensorConfigDialog(
 private fun SensorItemRow(
     sensor: SensorInfo,
     isActive: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .clickable(enabled = enabled) { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
         )
