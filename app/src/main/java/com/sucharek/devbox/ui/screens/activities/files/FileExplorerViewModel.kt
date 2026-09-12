@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import com.sucharek.devbox.models.MessageStates
 import java.io.OutputStream
+import kotlin.time.Duration.Companion.milliseconds
 
 sealed class DownloadState {
     object Idle : DownloadState()
@@ -187,13 +188,13 @@ class FileExplorerViewModel(
             // 1. Send stop
             sendIoRequest(JSONObject().apply { put("type", "stop") })
             // 2. Short delay to let Lua process the stop
-            kotlinx.coroutines.delay(500)
+            kotlinx.coroutines.delay(500.milliseconds)
             // 3. Retry the getStream (preserving original chunk sizes)
             sendIoRequest(JSONObject().apply {
                 put("type", "getStream")
                 put("path", item.fullPath)
                 put("lSize", lastLuaSizeKB * 1024)
-                put("qSize", lastJsSizeKB * 1024)
+                put("jSize", lastJsSizeKB * 1024)
             })
         }
     }
@@ -313,7 +314,7 @@ class FileExplorerViewModel(
             put("type", "getStream")
             put("path", item.fullPath)
             put("lSize", luaChunkSizeKB * 1024)
-            put("qSize", jsChunkSizeKB * 1024)
+            put("jSize", jsChunkSizeKB * 1024)
         })
     }
 
@@ -413,12 +414,5 @@ class FileExplorerViewModel(
 
     private fun sendIoRequest(args: JSONObject) {
         globalWatchViewModel.sendStructuredMessage(type = "io", args = args)
-    }
-
-    fun navigateUp() {
-        val current = _currentPath.value
-        if (current == "/" || current.isBlank()) return
-        val parentPath = current.substringBeforeLast("/").ifEmpty { "/" }
-        requestDirectoryListing(parentPath)
     }
 }
