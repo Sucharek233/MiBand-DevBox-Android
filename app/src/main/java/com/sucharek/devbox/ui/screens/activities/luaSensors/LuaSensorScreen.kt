@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -30,12 +31,12 @@ fun LuaSensorScreen(
     viewModel: LuaSensorViewModel = viewModel(),
     watchViewModel: WatchViewModel,
     onBack: () -> Unit,
-    onSensorSubscribed: (String) -> Unit
+    onSensorSubscribed: (String) -> Unit,
 ) {
     val predefinedSensors by viewModel.predefinedSensors.collectAsState()
     val allSensors by viewModel.allSensors.collectAsState()
     val isDiscovering by viewModel.isDiscovering.collectAsState()
-    val isBusy by watchViewModel.isAnyOperationActive.collectAsState()
+    val isBusy by watchViewModel.isLuaBusy.collectAsState()
     val activeSensor by viewModel.activeSensor.collectAsState()
     val pendingSensor by viewModel.pendingSensor.collectAsState()
     val subscriptionState by viewModel.subscriptionState.collectAsState()
@@ -43,17 +44,19 @@ fun LuaSensorScreen(
 
     val provider by viewModel.provider.collectAsState()
     val useKnown by viewModel.useKnown.collectAsState()
-    val period by viewModel.period.collectAsState()
+    val dataPollPeriod by viewModel.dataPollPeriod.collectAsState()
+    val streamEntries by viewModel.streamEntries.collectAsState()
+    val sendInterval by viewModel.sendInterval.collectAsState()
     val sliderValue by viewModel.sliderValue.collectAsState()
     val selectedTabIndex by viewModel.selectedTabIndex.collectAsState()
     
     val predefinedListState = rememberLazyListState(
         initialFirstVisibleItemIndex = viewModel.predefinedScrollIndex,
-        initialFirstVisibleItemScrollOffset = viewModel.predefinedScrollOffset
+        initialFirstVisibleItemScrollOffset = viewModel.predefinedScrollOffset,
     )
     val allListState = rememberLazyListState(
         initialFirstVisibleItemIndex = viewModel.allScrollIndex,
-        initialFirstVisibleItemScrollOffset = viewModel.allScrollOffset
+        initialFirstVisibleItemScrollOffset = viewModel.allScrollOffset,
     )
 
     DisposableEffect(Unit) {
@@ -66,30 +69,34 @@ fun LuaSensorScreen(
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
         ) {
             // --- Header & Status ---
             Row(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+                
                 Text(
                     text = "Sensors",
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (subscriptionState != SubscriptionState.DISCONNECTED) {
                         StreamStatusChip(
                             state = subscriptionState,
-                            activeSensor = activeSensor?.name ?: "Unknown"
+                            activeSensor = activeSensor?.name ?: "Unknown",
                         )
                     }
 
@@ -97,7 +104,7 @@ fun LuaSensorScreen(
 
                     IconButton(
                         onClick = { viewModel.discoverSensors() },
-                        enabled = !isBusy
+                        enabled = !isBusy,
                     ) {
                         if (isDiscovering) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
@@ -122,7 +129,7 @@ fun LuaSensorScreen(
                 }
             }
 
-            TabRow(selectedTabIndex = selectedTabIndex) {
+            SecondaryTabRow(selectedTabIndex = selectedTabIndex) {
                 Tab(
                     selected = selectedTabIndex == 0,
                     onClick = { viewModel.setSelectedTabIndex(0) },
@@ -137,16 +144,16 @@ fun LuaSensorScreen(
 
             if (selectedTabIndex == 1) {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.warningContainer()),
+                    colors = CardDefaults.cardColors(containerColor = warningContainerColor()),
                     modifier = Modifier.fillMaxWidth().padding(16.dp)
                 ) {
                     Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.onWarningContainer())
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = onWarningContainerColor())
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             text = "Raw nodes might not report data or could cause device instability.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onWarningContainer()
+                            color = onWarningContainerColor()
                         )
                     }
                 }
@@ -190,11 +197,15 @@ fun LuaSensorScreen(
             sensor = sensor,
             provider = provider,
             useKnown = useKnown,
-            period = period,
+            dataPollPeriod = dataPollPeriod,
+            streamEntries = streamEntries,
+            sendInterval = sendInterval,
             sliderValue = sliderValue,
             onProviderChange = viewModel::setProvider,
             onUseKnownChange = viewModel::setUseKnown,
             onSliderChange = viewModel::setSliderValue,
+            onStreamEntriesChange = viewModel::setStreamEntries,
+            onSendIntervalChange = viewModel::setSendInterval,
             onSubscribe = { 
                 viewModel.subscribeTo(sensor)
                 onSensorSubscribed(sensor.name)
@@ -210,11 +221,15 @@ fun LuaSensorConfigDialog(
     sensor: LuaSensorInfo,
     provider: LuaSensorProvider,
     useKnown: Boolean,
-    period: Int,
+    dataPollPeriod: Int,
+    streamEntries: Int,
+    sendInterval: Int,
     sliderValue: Float,
     onProviderChange: (LuaSensorProvider) -> Unit,
     onUseKnownChange: (Boolean) -> Unit,
     onSliderChange: (Float) -> Unit,
+    onStreamEntriesChange: (Int) -> Unit,
+    onSendIntervalChange: (Int) -> Unit,
     onSubscribe: () -> Unit,
     onDismiss: () -> Unit,
     isBusy: Boolean
@@ -227,11 +242,15 @@ fun LuaSensorConfigDialog(
                 LuaSensorSettings(
                     provider = provider,
                     useKnown = useKnown,
-                    period = period,
+                    dataPollPeriod = dataPollPeriod,
+                    streamEntries = streamEntries,
+                    sendInterval = sendInterval,
                     sliderValue = sliderValue,
                     onProviderChange = onProviderChange,
                     onUseKnownChange = onUseKnownChange,
                     onSliderChange = onSliderChange,
+                    onStreamEntriesChange = onStreamEntriesChange,
+                    onSendIntervalChange = onSendIntervalChange,
                     isBusy = isBusy
                 )
                 
@@ -270,11 +289,15 @@ fun LuaSensorConfigDialog(
 fun LuaSensorSettings(
     provider: LuaSensorProvider,
     useKnown: Boolean,
-    period: Int,
+    dataPollPeriod: Int,
+    streamEntries: Int,
+    sendInterval: Int,
     sliderValue: Float,
     onProviderChange: (LuaSensorProvider) -> Unit,
     onUseKnownChange: (Boolean) -> Unit,
     onSliderChange: (Float) -> Unit,
+    onStreamEntriesChange: (Int) -> Unit,
+    onSendIntervalChange: (Int) -> Unit,
     isBusy: Boolean
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -305,7 +328,7 @@ fun LuaSensorSettings(
         Spacer(modifier = Modifier.height(8.dp))
         
         Column {
-            Text("Period: ${period}ms", style = MaterialTheme.typography.bodyMedium)
+            Text("Data Poll Period: ${dataPollPeriod}ms", style = MaterialTheme.typography.bodyMedium)
             Slider(
                 value = sliderValue,
                 onValueChange = onSliderChange,
@@ -318,14 +341,42 @@ fun LuaSensorSettings(
                 Text("1000ms", style = MaterialTheme.typography.labelSmall)
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Column {
+            Text("Entries per Send: $streamEntries", style = MaterialTheme.typography.bodyMedium)
+            Slider(
+                value = streamEntries.toFloat(),
+                onValueChange = { onStreamEntriesChange(it.toInt()) },
+                valueRange = 1f..50f,
+                steps = 49,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isBusy
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Column {
+            Text("Send Interval: ${sendInterval}ms", style = MaterialTheme.typography.bodyMedium)
+            Slider(
+                value = sendInterval.toFloat(),
+                onValueChange = { onSendIntervalChange(it.toInt()) },
+                valueRange = 100f..5000f,
+                steps = 49,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isBusy
+            )
+        }
     }
 }
 
 // Extension to get warning colors easily
 @Composable
-fun ColorScheme.warningContainer() = Color(0xFFFFF4E5)
+fun warningContainerColor() = Color(0xFFFFF4E5)
 @Composable
-fun ColorScheme.onWarningContainer() = Color(0xFF663C00)
+fun onWarningContainerColor() = Color(0xFF663C00)
 
 @Composable
 fun LuaSensorItemRow(

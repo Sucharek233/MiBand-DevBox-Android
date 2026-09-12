@@ -13,13 +13,15 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import com.sucharek.devbox.models.MessageStates
+import kotlin.math.pow
 
 class LuaSensorViewModel(
-    private val globalWatchViewModel: WatchViewModel
+    private val globalWatchViewModel: WatchViewModel,
+
 ) : ViewModel(), BaseSensorViewModel {
 
     // 1. Discovery State
-    private val _isDiscovering = MutableStateFlow(false)
+    private val _isDiscovering = MutableStateFlow(value = false)
     val isDiscovering: StateFlow<Boolean> = _isDiscovering.asStateFlow()
 
     private val _predefinedSensors = MutableStateFlow<List<LuaSensorInfo>>(emptyList())
@@ -48,13 +50,19 @@ class LuaSensorViewModel(
     private val _provider = MutableStateFlow(LuaSensorProvider.FILE)
     val provider: StateFlow<LuaSensorProvider> = _provider.asStateFlow()
 
-    private val _useKnown = MutableStateFlow(true)
+    private val _useKnown = MutableStateFlow(value = true)
     val useKnown: StateFlow<Boolean> = _useKnown.asStateFlow()
 
-    private val _period = MutableStateFlow(50)
-    val period: StateFlow<Int> = _period.asStateFlow()
+    private val _dataPollPeriod = MutableStateFlow(value = 80)
+    val dataPollPeriod: StateFlow<Int> = _dataPollPeriod.asStateFlow()
 
-    // Linear slider value (0.0 to 1.0)
+    private val _streamEntries = MutableStateFlow(value = 10)
+    val streamEntries: StateFlow<Int> = _streamEntries.asStateFlow()
+
+    private val _sendInterval = MutableStateFlow(value = 1000)
+    val sendInterval: StateFlow<Int> = _sendInterval.asStateFlow()
+
+    // Linear slider value (0.0 to 1.0) for dataPollPeriod
     private val _sliderValue = MutableStateFlow(0f)
     val sliderValue: StateFlow<Float> = _sliderValue.asStateFlow()
 
@@ -81,8 +89,8 @@ class LuaSensorViewModel(
                 _isDiscovering.value = false
                 discoveryPhase = 0
                 // Reset connection state if mailbox times out
-                if (_subscriptionState.value == SubscriptionState.SUBSCRIBING || 
-                    _subscriptionState.value == SubscriptionState.UNSUBSCRIBING) {
+                if ((_subscriptionState.value == SubscriptionState.SUBSCRIBING) || 
+                    (_subscriptionState.value == SubscriptionState.UNSUBSCRIBING)) {
                     _subscriptionState.value = SubscriptionState.DISCONNECTED
                     _activeSensor.value = null
                 }
@@ -100,15 +108,18 @@ class LuaSensorViewModel(
         _useKnown.value = value
     }
 
-    fun setPeriod(value: Int) {
-        _period.value = value
-        // Update slider value to match
-        _sliderValue.value = periodToSlider(value)
+
+    fun setStreamEntries(value: Int) {
+        _streamEntries.value = value
+    }
+
+    fun setSendInterval(value: Int) {
+        _sendInterval.value = value
     }
 
     fun setSliderValue(value: Float) {
         _sliderValue.value = value
-        _period.value = sliderToPeriod(value)
+        _dataPollPeriod.value = sliderToPeriod(value)
     }
 
     fun setSelectedTabIndex(index: Int) {
@@ -117,15 +128,10 @@ class LuaSensorViewModel(
 
     private fun sliderToPeriod(value: Float): Int {
         // Period = 50 * 20^value
-        val period = 50.0 * Math.pow(20.0, value.toDouble())
+        val period = 50.0 * 20.0.pow(value.toDouble())
         return period.toInt().coerceIn(50, 1000)
     }
 
-    private fun periodToSlider(period: Int): Float {
-        // value = log20(period / 50) = ln(period / 50) / ln(20)
-        val value = Math.log(period.toDouble() / 50.0) / Math.log(20.0)
-        return value.toFloat().coerceIn(0f, 1f)
-    }
 
     fun setPendingSensor(sensor: LuaSensorInfo?) {
         _pendingSensor.value = sensor
@@ -139,7 +145,7 @@ class LuaSensorViewModel(
             // Fetch predefined first
             globalWatchViewModel.sendStructuredMessage(
                 type = "sensorsLua",
-                args = JSONObject().apply { put("type", "listPre") }
+                args = JSONObject().apply { put("type", "listPre") },
             )
         }
     }
@@ -158,8 +164,10 @@ class LuaSensorViewModel(
                 put("sensor", sensor.id)
                 put("provider", _provider.value.value)
                 put("useKnown", _useKnown.value)
-                put("period", _period.value)
-            }
+                put("dataPollPeriod", _dataPollPeriod.value)
+                put("streamEntries", _streamEntries.value)
+                put("sendInterval", _sendInterval.value)
+            },
         )
     }
 
@@ -168,7 +176,7 @@ class LuaSensorViewModel(
         _subscriptionState.value = SubscriptionState.UNSUBSCRIBING
         globalWatchViewModel.sendStructuredMessage(
             type = "sensorsLua",
-            args = JSONObject().apply { put("type", "unsub") }
+            args = JSONObject().apply { put("type", "unsub") },
         )
     }
 
@@ -187,21 +195,21 @@ class LuaSensorViewModel(
                 }
                 MessageStates.DONE -> {
                     val resStr = res?.toString() ?: ""
-                    if (resStr == "Unsubscribed" || resStr == "Not subscribed") {
+                    if ((resStr == "Unsubscribed") || (resStr == "Not subscribed")) {
                         _subscriptionState.value = SubscriptionState.DISCONNECTED
                         _activeSensor.value = null
-                    } else if (resStr == "Subscribed" || resStr == "Already subscribed") {
+                    } else if ((resStr == "Subscribed") || (resStr == "Already subscribed")) {
                         _subscriptionState.value = SubscriptionState.SUBSCRIBED
                     }
 
-                    if (res != null && res !is String) {
+                    if ((res != null) && (res !is String)) {
                         parseListResult(res)
                         
                         if (discoveryPhase == 1) {
                             discoveryPhase = 2
                             globalWatchViewModel.sendStructuredMessage(
                                 type = "sensorsLua",
-                                args = JSONObject().apply { put("type", "list") }
+                                args = JSONObject().apply { put("type", "list") },
                             )
                         } else {
                             discoveryPhase = 0
@@ -223,7 +231,7 @@ class LuaSensorViewModel(
                     val parsedList = mutableListOf<SensorSample>()
 
                     for (i in 0 until samplesArray.length()) {
-                        val sampleItem = samplesArray.get(i)
+                        val sampleItem = samplesArray[i]
                         val valueMap = mutableMapOf<String, Double>()
 
                         when (sampleItem) {
@@ -265,14 +273,16 @@ class LuaSensorViewModel(
                 } ?: emptyList()
                 val available = sObj.optBoolean("available", false)
                 
-                newList.add(LuaSensorInfo(
-                    id = id,
-                    name = name,
-                    path = id,
-                    availability = if (available) SensorAvailability.AVAILABLE else SensorAvailability.UNAVAILABLE,
-                    properties = props,
-                    isPredefined = true
-                ))
+                newList.add(
+                    LuaSensorInfo(
+                        id = id,
+                        name = name,
+                        path = id,
+                        availability = if (available) SensorAvailability.AVAILABLE else SensorAvailability.UNAVAILABLE,
+                        properties = props,
+                        isPredefined = true,
+                    ),
+                )
             }
             _predefinedSensors.value = newList.sortedBy { it.name }
         } else if (res is JSONArray) {
@@ -280,10 +290,12 @@ class LuaSensorViewModel(
             // list result
             for (i in 0 until res.length()) {
                 val id = res.getString(i)
-                newList.add(LuaSensorInfo(
-                    id = id,
-                    availability = SensorAvailability.AVAILABLE
-                ))
+                newList.add(
+                    LuaSensorInfo(
+                        id = id,
+                        availability = SensorAvailability.AVAILABLE,
+                    ),
+                )
             }
             _allSensors.value = newList.sortedBy { it.id }
         }
