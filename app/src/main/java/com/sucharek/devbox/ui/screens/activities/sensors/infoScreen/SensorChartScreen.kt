@@ -95,7 +95,7 @@ fun SensorChartScreen(
                 StreamStatusChip(state = subscriptionState, activeSensor = sensorName)
             }
 
-            TabRow(selectedTabIndex = selectedTab) {
+            SecondaryTabRow(selectedTabIndex = selectedTab) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = selectedTab == index,

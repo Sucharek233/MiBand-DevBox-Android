@@ -73,7 +73,7 @@ fun PingScreen(
                 }
             }
 
-            TabRow(selectedTabIndex = if (selectedPingType == "qjs") 0 else 1) {
+            SecondaryTabRow(selectedTabIndex = if (selectedPingType == "qjs") 0 else 1) {
                 Tab(
                     selected = selectedPingType == "qjs",
                     onClick = { selectedPingType = "qjs" },

@@ -74,7 +74,7 @@ fun LuaSysInfoScreen(
                 }
             }
 
-            TabRow(selectedTabIndex = selectedTab) {
+            SecondaryTabRow(selectedTabIndex = selectedTab) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = selectedTab == index,

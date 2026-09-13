@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sucharek.devbox.ui.screens.maindashboard.WatchViewModel
 import com.sucharek.devbox.ui.screens.activities.qjsshell.JsonTreeItem
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,9 +51,9 @@ fun ModuleCompatibilityScreen(
     LaunchedEffect(Unit) {
         viewModel.pulseModule.collect { name ->
             // Delay the pulse slightly so it's visible after/during the scroll
-            kotlinx.coroutines.delay(200L)
+            kotlinx.coroutines.delay(200L.milliseconds)
             pulsingModule = name
-            kotlinx.coroutines.delay(1000L) // Hold the peak color
+            kotlinx.coroutines.delay(1000L.milliseconds) // Hold the peak color
             pulsingModule = null
         }
     }
