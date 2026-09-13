@@ -64,6 +64,8 @@ import com.sucharek.devbox.ui.screens.activities.systemlogs.SystemLogsScreen
 import com.sucharek.devbox.ui.screens.activities.systemlogs.SystemLogsViewModel
 import com.sucharek.devbox.ui.screens.activities.terminal.TerminalScreen
 import com.sucharek.devbox.ui.screens.activities.terminal.TerminalViewModel
+import com.sucharek.devbox.ui.screens.activities.websocket.WebSocketScreen
+import com.sucharek.devbox.ui.screens.activities.websocket.WebSocketViewModel
 
 import com.sucharek.devbox.ui.screens.deviceselection.DeviceSelectionScreen
 import com.sucharek.devbox.ui.screens.maindashboard.MainDashboardScreen
@@ -345,6 +347,16 @@ class MainActivity : ComponentActivity() {
                                 PingScreen(
                                     viewModel = pingViewModel,
                                     initialType = pingRoute.initialType
+                                )
+                            }
+
+                            composable<Screen.WebSocketApi> {
+                                val activity = LocalActivity.current as ComponentActivity
+                                val wsViewModel: WebSocketViewModel = viewModel(viewModelStoreOwner = activity) {
+                                    WebSocketViewModel(watchViewModel)
+                                }
+                                WebSocketScreen(
+                                    viewModel = wsViewModel
                                 )
                             }
                         }

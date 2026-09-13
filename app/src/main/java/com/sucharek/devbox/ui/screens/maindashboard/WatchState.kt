@@ -32,6 +32,7 @@ enum class DashboardCategory(
     // Shared / Management
     PING("Ping", "Test connection latency", null, Icons.Default.Speed),
     SYSTEMLOGS("System Logs", "View global errors and events", null, Icons.Default.BugReport),
+    WEBSOCKET("WebSocket API", "Relay commands via local network", null, Icons.Default.Code),
 
     // Lua Service
     TERMINAL("Terminal", "Send custom commands", ServiceType.LUA, Icons.Default.Terminal),

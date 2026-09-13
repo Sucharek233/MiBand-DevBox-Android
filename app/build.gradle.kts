@@ -23,12 +23,20 @@ android {
 
     defaultConfig {
         applicationId = "com.sucharek.devbox"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/io.netty.versions.properties"
+        }
     }
 
     signingConfigs {
@@ -93,6 +101,10 @@ dependencies {
     implementation(libs.compose.highlight)
 
     implementation(libs.androidx.documentfile)
+
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.websockets)
 
     implementation(files("libs/xms-wearable-lib_1.4_release.aar"))
 

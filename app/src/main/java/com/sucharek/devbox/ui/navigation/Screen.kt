@@ -57,4 +57,7 @@ sealed interface Screen {
 
     @Serializable
     data class Ping(val initialType: String? = null) : Screen
+
+    @Serializable
+    object WebSocketApi : Screen
 }

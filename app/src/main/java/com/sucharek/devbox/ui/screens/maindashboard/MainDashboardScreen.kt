@@ -217,6 +217,7 @@ private fun DashboardCategoryCard(
                     DashboardCategory.LUASENSORS -> onNavigate(Screen.LuaSensors)
                     DashboardCategory.APPS -> onNavigate(Screen.Apps)
                     DashboardCategory.SYSTEMLOGS -> onNavigate(Screen.SystemLogs)
+                    DashboardCategory.WEBSOCKET -> onNavigate(Screen.WebSocketApi)
                 }
             },
         colors = CardDefaults.cardColors(

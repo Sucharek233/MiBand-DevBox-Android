@@ -11,6 +11,7 @@ import com.sucharek.devbox.ui.screens.activities.apps.AppsRepository
 import com.sucharek.devbox.models.LogType
 import com.sucharek.devbox.models.MessageStates
 import com.sucharek.devbox.models.SystemLogEntry
+import com.sucharek.devbox.websocket.WebSocketServerManager
 import com.xiaomi.xms.wearable.node.DataItem
 import com.xiaomi.xms.wearable.node.DataSubscribeResult
 import com.xiaomi.xms.wearable.node.Node
@@ -92,6 +93,21 @@ class WatchViewModel(
     private val _systemMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
     val systemMessages: SharedFlow<String> = _systemMessages.asSharedFlow()
 
+    // WebSocket relay
+    private val _rawIncomingMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
+    val rawIncomingMessages = _rawIncomingMessages.asSharedFlow()
+
+    private val _rawOutgoingMessages = MutableSharedFlow<String>(extraBufferCapacity = 64)
+    val rawOutgoingMessages = _rawOutgoingMessages.asSharedFlow()
+
+    private val _webSocketLogs = MutableSharedFlow<String>(extraBufferCapacity = 64)
+    val webSocketLogs = _webSocketLogs.asSharedFlow()
+
+    val webSocketManager = WebSocketServerManager(
+        onMessageReceived = { msg -> sendMessage(msg) },
+        onLog = { log -> viewModelScope.launch { _webSocketLogs.emit(log) } }
+    )
+
     private val _systemLogEntries = MutableStateFlow<List<SystemLogEntry>>(emptyList())
     val systemLogEntries: StateFlow<List<SystemLogEntry>> = _systemLogEntries.asStateFlow()
 
@@ -134,6 +150,11 @@ class WatchViewModel(
         viewModelScope.launch {
             systemMessages.collectLatest { rawMessage ->
                 parseAndAddLog(rawMessage)
+            }
+        }
+        viewModelScope.launch {
+            rawIncomingMessages.collect { msg ->
+                webSocketManager.broadcast(msg)
             }
         }
     }
@@ -258,6 +279,7 @@ class WatchViewModel(
         val message = String(rawMessage)
         println(message)
         viewModelScope.launch {
+            _rawIncomingMessages.emit(message)
             _systemMessages.emit("RECV: $message")
             try {
                 val json = JSONObject(message)
@@ -338,6 +360,7 @@ class WatchViewModel(
     fun sendMessage(text: String) {
         println("Sending message: $text")
         viewModelScope.launch {
+            _rawOutgoingMessages.emit(text)
             _systemMessages.emit("SENT: $text")
             try {
                 messagesEngine?.sendMessage(text)
