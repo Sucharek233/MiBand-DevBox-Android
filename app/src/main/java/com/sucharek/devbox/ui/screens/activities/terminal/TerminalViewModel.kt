@@ -106,6 +106,6 @@ class TerminalViewModel(
     }
 
     private fun appendLine(text: String, type: LineType) {
-        _terminalLogs.value = _terminalLogs.value + TerminalLine(text, type)
+        _terminalLogs.value += TerminalLine(text, type)
     }
 }

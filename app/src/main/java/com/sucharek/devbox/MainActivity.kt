@@ -68,7 +68,7 @@ import com.sucharek.devbox.ui.screens.activities.terminal.TerminalViewModel
 import com.sucharek.devbox.ui.screens.deviceselection.DeviceSelectionScreen
 import com.sucharek.devbox.ui.screens.maindashboard.MainDashboardScreen
 import com.sucharek.devbox.ui.screens.maindashboard.WatchViewModel
-import com.sucharek.devbox.ui.theme.devboxTheme
+import com.sucharek.devbox.ui.theme.DevboxTheme
 import dev.hossain.highlight.ui.HighlightThemeProvider
 
 class MainActivity : ComponentActivity() {
@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
         val deviceManager = DeviceManager(applicationContext)
 
         setContent {
-            devboxTheme {
+            DevboxTheme {
                 HighlightThemeProvider {
                     val navController = rememberNavController()
 

@@ -477,19 +477,27 @@ class WatchViewModel(
                     val json = JSONObject(jsonStr)
                     val msgType = json.optString("type", "unknown")
                     val state = json.optString("state", "")
+                    val errorMsg = json.optString("msg").ifEmpty { json.optString("message") }
+                    val isMailboxTimeout = ((state == MessageStates.ERROR) && (errorMsg.lowercase().trim() == "mailbox timeout") ||
+                                            state == MessageStates.TIMEOUT)
 
                     // Create a short summary for the message
                     val summary = if (isSent) {
                         "Sent $msgType"
                     } else {
-                        when (state) {
-                            MessageStates.ERROR -> "Error in $msgType"
-                            MessageStates.STREAM -> "Stream $msgType"
+                        when {
+                            isMailboxTimeout -> "Timeout in $msgType"
+                            state == MessageStates.ERROR -> "Error in $msgType"
+                            state == MessageStates.STREAM -> "Stream $msgType"
                             else -> "Recv $msgType"
                         }
                     }
 
-                    val finalType = if (!isSent && state == MessageStates.ERROR) LogType.LOCAL_ERROR else type
+                    val finalType = when {
+                        !isSent && isMailboxTimeout -> LogType.TIMEOUT
+                        !isSent && state == MessageStates.ERROR -> LogType.ERROR
+                        else -> type
+                    }
 
                     SystemLogEntry(
                         message = summary,
@@ -508,6 +516,10 @@ class WatchViewModel(
             } else if (rawMessage.startsWith("{")) {
                 val json = JSONObject(rawMessage)
                 val type = json.optString("type")
+                val state = json.optString("state")
+                val errorMsg = json.optString("msg").ifEmpty { json.optString("message") }
+                val isMailboxTimeout = (state == MessageStates.ERROR || state == MessageStates.TIMEOUT) && 
+                    (errorMsg.lowercase().trim() == "mailbox timeout")
 
                 if (type == "interconnect") {
                     SystemLogEntry(
@@ -516,16 +528,18 @@ class WatchViewModel(
                         type = LogType.INTERCONNECT,
                         raw = rawMessage
                     )
-                } else if (json.optString("state") == MessageStates.ERROR) {
-                    val errorType = when (type) {
-                        "luashell" -> LogType.LUA_ERROR
-                        "qjs" -> LogType.JS_ERROR
-                        else -> LogType.SYSTEM
-                    }
+                } else if (isMailboxTimeout) {
                     SystemLogEntry(
-                        message = json.optString("msg").ifEmpty { json.optString("message", "Unknown Error") },
+                        message = "Timeout in $type",
                         stack = if (json.has("stack")) json.optString("stack") else null,
-                        type = errorType,
+                        type = LogType.TIMEOUT,
+                        raw = rawMessage
+                    )
+                } else if (state == MessageStates.ERROR) {
+                    SystemLogEntry(
+                        message = "Error in $type",
+                        stack = if (json.has("stack")) json.optString("stack") else null,
+                        type = LogType.ERROR,
                         raw = rawMessage
                     )
                 } else {
@@ -537,8 +551,8 @@ class WatchViewModel(
                 }
             } else if (rawMessage.startsWith("LOCAL ERROR:")) {
                 SystemLogEntry(
-                    message = rawMessage.removePrefix("LOCAL ERROR:").trim(),
-                    type = LogType.LOCAL_ERROR,
+                    message = "App Error: " + rawMessage.removePrefix("LOCAL ERROR:").trim(),
+                    type = LogType.ERROR,
                     raw = rawMessage
                 )
             } else if (rawMessage.startsWith("SYSTEM:")) {
@@ -557,7 +571,7 @@ class WatchViewModel(
         } catch (e: Exception) {
             SystemLogEntry(
                 message = "Failed to parse log",
-                type = LogType.LOCAL_ERROR,
+                type = LogType.ERROR,
                 raw = rawMessage
             )
         }

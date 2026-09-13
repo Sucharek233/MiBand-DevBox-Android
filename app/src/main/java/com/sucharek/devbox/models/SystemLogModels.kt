@@ -3,9 +3,8 @@ package com.sucharek.devbox.models
 enum class LogType {
     SYSTEM,
     INTERCONNECT,
-    LUA_ERROR,
-    JS_ERROR,
-    LOCAL_ERROR,
+    ERROR,
+    TIMEOUT,
     SENT,
     RECV,
     UNKNOWN

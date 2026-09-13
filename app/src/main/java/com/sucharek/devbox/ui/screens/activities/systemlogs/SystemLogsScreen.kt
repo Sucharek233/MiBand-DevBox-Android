@@ -83,12 +83,11 @@ private fun SystemLogItem(log: SystemLogEntry) {
     val timeFormat = remember { SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()) }
     
     val color = when {
-        log.type == LogType.LOCAL_ERROR || log.type == LogType.INTERCONNECT -> MaterialTheme.colorScheme.error
+        log.type == LogType.ERROR || log.type == LogType.INTERCONNECT -> Color(0xFFD32F2F) // Vibrant Red for errors
+        log.type == LogType.TIMEOUT -> Color(0xFFFF9800) // Orange for timeouts
         log.isStream -> Color(0xFFFFEB3B) // Yellow for streams
         log.type == LogType.SENT -> Color(0xFF4CAF50)
         log.type == LogType.RECV -> Color(0xFF2196F3)
-        log.type == LogType.LUA_ERROR -> Color(0xFFE91E63)
-        log.type == LogType.JS_ERROR -> Color(0xFFFF9800)
         log.type == LogType.SYSTEM -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.secondary
     }
