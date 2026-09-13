@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.*
 import org.json.JSONObject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.time.Duration.Companion.milliseconds
 
 class WatchViewModel(
     private val deviceManager: DeviceManager,
@@ -173,7 +174,7 @@ class WatchViewModel(
                 } catch (e: Exception) {
                     if (e.message?.contains("permission denied") == true) {
                         // Request permissions and retry once
-                        suspendCancellableCoroutine<List<String>> { cont ->
+                        suspendCancellableCoroutine { cont ->
                             permissions.requestPermissions(
                                 onSuccess = { cont.resume(it) },
                                 onFailure = { cont.resumeWithException(it) }
@@ -411,7 +412,7 @@ class WatchViewModel(
                     if (slowOp == null && synchronized(activeOperations) { activeOperations.isEmpty() }) {
                         break
                     }
-                    delay(500)
+                    delay(500.milliseconds)
                 }
             }
         }

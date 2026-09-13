@@ -21,6 +21,7 @@ import dev.hossain.highlight.ui.ExperimentalHighlightApi
 import dev.hossain.highlight.ui.LocalHighlightTheme
 import dev.hossain.highlight.ui.rememberSyntaxHighlightedEditorValue
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHighlightApi::class)
 @Composable
@@ -51,7 +52,7 @@ fun AppManifestScreen(
     // Auto-clear "Saved" status after 3 seconds
     LaunchedEffect(saveStatus) {
         if (saveStatus == "Saved") {
-            delay(3000)
+            delay(3000.milliseconds)
             viewModel.clearSaveStatus()
         }
     }
