@@ -272,7 +272,6 @@ class WatchViewModel(
 
     private fun handleIncomingMessage(rawMessage: ByteArray) {
         val message = String(rawMessage)
-        println(message)
         viewModelScope.launch {
             _rawIncomingMessages.emit(message)
             _systemMessages.emit("RECV: $message")
@@ -353,7 +352,6 @@ class WatchViewModel(
     }
 
     fun sendMessage(text: String) {
-        println("Sending message: $text")
         viewModelScope.launch {
             _rawOutgoingMessages.emit(text)
             _systemMessages.emit("SENT: $text")

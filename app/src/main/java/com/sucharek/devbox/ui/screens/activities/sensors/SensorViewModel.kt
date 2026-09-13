@@ -92,8 +92,6 @@ class SensorViewModel(
         _lastError.value = null
         _incomingSamples.value = emptyList()
 
-        println("[SensorStream] ---> SUBSCRIBING TO: $sensorName (entries: $streamEntries, interval: ${sendInterval}ms)")
-
         val payload = JSONObject().apply {
             put("type", "sub")
             put("sensor", sensorName)
@@ -108,7 +106,6 @@ class SensorViewModel(
 
     override fun unsubscribeCurrent() {
         val current = _activeSensor.value
-        println("[SensorStream] <--- UNSUBSCRIBING FROM: $current")
 
         _subscriptionState.value = SubscriptionState.UNSUBSCRIBING
         val payload = JSONObject().apply {
@@ -121,8 +118,6 @@ class SensorViewModel(
     }
 
     private fun handleIncomingMessage(rawJson: String) {
-        println("[SensorStream] RAW INCOMING: $rawJson")
-
         runCatching {
             val json = JSONObject(rawJson)
             if (json.optString("type") != "sensors") return

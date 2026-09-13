@@ -20,10 +20,10 @@ class Permissions(
             for((index, permission) in permissions.withIndex()){
                 isPermissionGranted.add("${permission.name} grant status is ${it[index]}")
             }
-            println("check permissions result is $isPermissionGranted")
+//            println("check permissions result is $isPermissionGranted")
             onResult(isPermissionGranted)
         }?.addOnFailureListener {
-            println("check permissions failed:${it.message}")
+//            println("check permissions failed:${it.message}")
         }
     }
 
@@ -35,10 +35,10 @@ class Permissions(
                 for(permission in permissions){
                     permissionGrantedList.add(permission.name)
                 }
-                println("granted permission is $permissionGrantedList")
+//                println("granted permission is $permissionGrantedList")
                 onSuccess(permissionGrantedList)
             }?.addOnFailureListener {
-                println("request permission failed:${it.message}")
+//                println("request permission failed:${it.message}")
                 onFailure(it)
             }
     }
