@@ -22,7 +22,7 @@ class SensorViewModel(
     val scanProgress: StateFlow<Float> = _scanProgress.asStateFlow()
 
     // Map of known sensors and their discovery info (Default: UNKNOWN)
-    private val _sensorList = MutableStateFlow<List<SensorInfo>>(defaultKnownSensors)
+    private val _sensorList = MutableStateFlow(defaultKnownSensors)
     val sensorList: StateFlow<List<SensorInfo>> = _sensorList.asStateFlow()
 
     // 2. Stream State
@@ -136,7 +136,7 @@ class SensorViewModel(
                 MessageStates.ERROR -> {
                     val msg = json.optString("msg", "Unknown error")
                     val stack = json.optString("stack", "")
-                    _lastError.value = msg to if (stack.isNotEmpty()) stack else null
+                    _lastError.value = msg to stack.ifEmpty { null }
                     _subscriptionState.value = SubscriptionState.ERROR
                 }
 

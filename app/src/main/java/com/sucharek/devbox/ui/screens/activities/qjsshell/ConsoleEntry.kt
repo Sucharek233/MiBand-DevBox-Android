@@ -58,7 +58,7 @@ sealed class ConsoleEntry {
             return entries
         }
 
-        private fun parseJsResult(res: String): Any? {
+        private fun parseJsResult(res: String): Any {
             val trimmed = res.trim()
 
             // 1. Double-quoted string from JSON.stringify (e.g. "\"hi\"")

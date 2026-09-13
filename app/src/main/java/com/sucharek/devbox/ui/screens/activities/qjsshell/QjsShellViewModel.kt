@@ -24,7 +24,7 @@ class QjsShellViewModel(
         viewModelScope.launch {
             globalWatchViewModel.qjsMessages.collectLatest { payload ->
                 val newEntries = ConsoleEntry.parsePayload(payload)
-                _entries.value = _entries.value + newEntries
+                _entries.value += newEntries
             }
         }
     }
@@ -38,7 +38,7 @@ class QjsShellViewModel(
         historyIndex = commandHistory.size
 
         // Add input prompt entry
-        _entries.value = _entries.value + ConsoleEntry.Input(codeSnippet)
+        _entries.value += ConsoleEntry.Input(codeSnippet)
 
         val jsArgs = JSONObject().apply {
             put("code", codeSnippet)

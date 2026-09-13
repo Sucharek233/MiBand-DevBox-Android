@@ -60,7 +60,7 @@ class LuaShellViewModel(
                     entriesToAdd.add(ConsoleEntry.Output(payload))
                 }
 
-                _entries.value = _entries.value + entriesToAdd
+                _entries.value += entriesToAdd
             }
         }
     }
@@ -74,7 +74,7 @@ class LuaShellViewModel(
         historyIndex = commandHistory.size
 
         // Add input prompt entry
-        _entries.value = _entries.value + ConsoleEntry.Input(codeSnippet)
+        _entries.value += ConsoleEntry.Input(codeSnippet)
 
         val luaArgs = JSONObject().apply {
             put("code", codeSnippet)
