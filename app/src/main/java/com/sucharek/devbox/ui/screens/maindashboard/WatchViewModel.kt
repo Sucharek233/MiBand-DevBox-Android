@@ -559,7 +559,6 @@ class WatchViewModel(
     }
 
     override fun onCleared() {
-        super.onCleared()
         viewModelScope.launch {
             try {
                 messagesEngine?.removeIncomingMessageListener()

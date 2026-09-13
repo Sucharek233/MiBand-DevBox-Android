@@ -31,7 +31,7 @@ sealed class ConsoleEntry {
                 val logsArray = outer.optJSONArray("logs")
                 if (logsArray != null) {
                     for (i in 0 until logsArray.length()) {
-                        val logStr = logsArray.optString(i, null)
+                        val logStr = logsArray.opt(i)?.takeIf { it != JSONObject.NULL }?.toString()
                         if (logStr != null) {
                             entries.add(Log(rawResult = parseJsResult(logStr)))
                         }
@@ -41,10 +41,10 @@ sealed class ConsoleEntry {
                 // 2. Check for error or result
                 if (state == MessageStates.ERROR) {
                     val msg = outer.optString("msg", "Unknown error")
-                    val stack = outer.optString("stack", null)
+                    val stack = outer.opt("stack")?.takeIf { it != JSONObject.NULL }?.toString()
                     entries.add(Error(message = msg, stack = stack))
                 } else {
-                    val resString = outer.optString("res", null)
+                    val resString = outer.opt("res")?.takeIf { it != JSONObject.NULL }?.toString()
                     if (resString != null) {
                         entries.add(Output(rawResult = parseJsResult(resString)))
                     } else if (!outer.has("logs")) {

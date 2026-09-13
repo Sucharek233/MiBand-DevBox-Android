@@ -41,7 +41,7 @@ class LuaShellViewModel(
                     // 2. Handle Result or Error
                     if (state == MessageStates.ERROR) {
                         val msg = outer.optString("msg", "Unknown error")
-                        val stack = outer.optString("stack", null)
+                        val stack = outer.opt("stack")?.takeIf { it != JSONObject.NULL }?.toString()
                         entriesToAdd.add(ConsoleEntry.Error(message = msg, stack = stack))
                     } else if (state == MessageStates.DONE) {
                         val res = outer.opt("res")

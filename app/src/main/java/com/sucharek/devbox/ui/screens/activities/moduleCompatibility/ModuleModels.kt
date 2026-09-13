@@ -34,7 +34,7 @@ sealed class ModuleResponse {
                     return Error
                 }
 
-                val resString = outer.optString("res", null)
+                val resString = outer.opt("res")?.takeIf { it != JSONObject.NULL }?.toString()
 
                 if (resString != null) {
                     val trimmed = resString.trim()

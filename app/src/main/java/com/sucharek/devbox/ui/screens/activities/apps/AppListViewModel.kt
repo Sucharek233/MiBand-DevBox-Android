@@ -5,7 +5,7 @@ import com.sucharek.devbox.ui.screens.maindashboard.WatchViewModel
 import kotlinx.coroutines.flow.StateFlow
 
 class AppListViewModel(
-    private val globalWatchViewModel: WatchViewModel
+    globalWatchViewModel: WatchViewModel
 ) : ViewModel() {
 
     private val repository = globalWatchViewModel.appsRepository
