@@ -30,7 +30,7 @@ import com.sucharek.devbox.ui.screens.activities.qjsshell.JsonTreeItem
 fun ModuleCompatibilityScreen(
     viewModel: ModuleCompatibilityViewModel,
     watchViewModel: WatchViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val modules by viewModel.modules.collectAsState()
     val isBusy by watchViewModel.isJsBusy.collectAsState()
@@ -47,7 +47,7 @@ fun ModuleCompatibilityScreen(
     // Automatically trigger a check if not done
     LaunchedEffect(Unit) {
         if (modules.all { it.status == CompatStatus.UNKNOWN }) {
-            viewModel.testSelectedCompat()
+            viewModel.testCompatibility()
         }
     }
 
@@ -77,7 +77,7 @@ fun ModuleCompatibilityScreen(
                 )
 
                 Button(
-                    onClick = { viewModel.testSelectedCompat() },
+                    onClick = { viewModel.testCompatibility() },
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                     enabled = !isBusy
                 ) {
@@ -103,7 +103,7 @@ fun ModuleCompatibilityScreen(
                         ModuleCardRow(
                             item = item,
                             onToggleSelect = { viewModel.toggleSelection(item.name) },
-                            onCheckCompat = { viewModel.testSingleCompat(item.name) },
+                            onCheckCompat = { viewModel.testCompatibility(listOf(item.name)) },
                             onToggleExpand = { viewModel.fetchFunctions(item.name) },
                             isBusy = isBusy
                         )

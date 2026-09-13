@@ -155,17 +155,6 @@ class ModuleCompatibilityViewModel(
         }
     }
 
-    fun toggleExpanded(moduleName: String) {
-        _modules.value = _modules.value.map {
-            if (it.name == moduleName) {
-                val newExpanded = !it.isExpanded
-                if (newExpanded && it.functionsResult == null && !it.isLoadingFuncs) {
-                    fetchFunctions(moduleName)
-                }
-                it.copy(isExpanded = newExpanded)
-            } else it
-        }
-    }
 
     fun addCustomModule(moduleName: String) {
         val trimmed = moduleName.trim()
@@ -177,42 +166,29 @@ class ModuleCompatibilityViewModel(
         }
 
         val newItem = ModuleItem(name = trimmed, isSelected = true)
-        _modules.value = _modules.value + newItem
+        _modules.value += newItem
         val newIndex = _modules.value.size - 1
         
         viewModelScope.launch {
             _scrollToModule.emit(newIndex)
         }
         
-        testSingleCompat(trimmed)
+        testCompatibility(listOf(trimmed))
     }
 
-    fun testSelectedCompat() {
-        val selectedNames = _modules.value.filter { it.isSelected }.map { it.name }
-        if (selectedNames.isEmpty()) return
+    fun testCompatibility(moduleNames: List<String>? = null) {
+        val names = moduleNames ?: _modules.value.filter { it.isSelected }.map { it.name }
+        if (names.isEmpty()) return
 
         _modules.value = _modules.value.map {
-            if (it.name in selectedNames) it.copy(status = CompatStatus.CHECKING) else it
+            if (it.name in names) it.copy(status = CompatStatus.CHECKING) else it
         }
 
         val jsonArgs = JSONObject().apply {
             put("type", "compat")
             val arr = JSONArray()
-            selectedNames.forEach { arr.put(it) }
+            names.forEach { arr.put(it) }
             put("modules", arr)
-        }
-
-        globalWatchViewModel.sendStructuredMessage(type = "modules", args = jsonArgs)
-    }
-
-    fun testSingleCompat(moduleName: String) {
-        _modules.value = _modules.value.map {
-            if (it.name == moduleName) it.copy(status = CompatStatus.CHECKING) else it
-        }
-
-        val jsonArgs = JSONObject().apply {
-            put("type", "compat")
-            put("modules", moduleName)
         }
 
         globalWatchViewModel.sendStructuredMessage(type = "modules", args = jsonArgs)
