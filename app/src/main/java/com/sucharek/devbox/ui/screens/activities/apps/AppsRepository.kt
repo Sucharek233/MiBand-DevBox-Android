@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -42,10 +41,7 @@ class AppsRepository(
     val loadingInfo: StateFlow<Set<String>> = _loadingInfo.asStateFlow()
 
     private val _loadingIcons = MutableStateFlow<Set<String>>(emptySet())
-    val loadingIcons: StateFlow<Set<String>> = _loadingIcons.asStateFlow()
 
-    val isAnyIconLoading: StateFlow<Boolean> = _loadingIcons.map { it.isNotEmpty() }
-        .stateIn(scope, SharingStarted.WhileSubscribed(), false)
 
     private val _loadingManifests = MutableStateFlow<Set<String>>(emptySet())
     val loadingManifests: StateFlow<Set<String>> = _loadingManifests.asStateFlow()
@@ -271,15 +267,11 @@ class AppsRepository(
                     scope.launch { _saveEvents.emit(pkg to false) }
                 }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             _isListLoading.value = false
             _loadingInfo.update { emptySet() }
             _loadingIcons.update { emptySet() }
             _loadingManifests.update { emptySet() }
         }
-    }
-
-    fun updateManifestCache(packageName: String, content: String) {
-        _manifestCache.update { it + (packageName to content) }
     }
 }

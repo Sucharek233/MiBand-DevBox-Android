@@ -27,7 +27,7 @@ sealed class DownloadState {
         val jsChunkBytes: Long,
         val jsChunkTotal: Long
     ) : DownloadState()
-    data class Success(val fileName: String, val localPath: String) : DownloadState()
+    data class Success(val fileName: String) : DownloadState()
     data class Error(val fileName: String, val message: String) : DownloadState()
 }
 
@@ -140,7 +140,7 @@ class FileExplorerViewModel(
         
         if (_activeDownload.value is DownloadState.Progress) {
             val fileName = downloadItem?.name ?: "file"
-            _activeDownload.value = DownloadState.Success(fileName, "Selected folder")
+            _activeDownload.value = DownloadState.Success(fileName)
             cleanupDownload()
             return
         }

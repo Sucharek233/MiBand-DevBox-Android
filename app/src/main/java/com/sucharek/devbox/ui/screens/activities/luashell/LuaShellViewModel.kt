@@ -56,7 +56,7 @@ class LuaShellViewModel(
                             entriesToAdd.add(ConsoleEntry.Output(nilObj))
                         }
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     entriesToAdd.add(ConsoleEntry.Output(payload))
                 }
 

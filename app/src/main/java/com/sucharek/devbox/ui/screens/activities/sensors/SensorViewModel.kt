@@ -18,9 +18,6 @@ class SensorViewModel(
     private val _isDiscovering = MutableStateFlow(false)
     val isDiscovering: StateFlow<Boolean> = _isDiscovering.asStateFlow()
 
-    private val _scanProgress = MutableStateFlow(0f)
-    val scanProgress: StateFlow<Float> = _scanProgress.asStateFlow()
-
     // Map of known sensors and their discovery info (Default: UNKNOWN)
     private val _sensorList = MutableStateFlow(defaultKnownSensors)
     val sensorList: StateFlow<List<SensorInfo>> = _sensorList.asStateFlow()

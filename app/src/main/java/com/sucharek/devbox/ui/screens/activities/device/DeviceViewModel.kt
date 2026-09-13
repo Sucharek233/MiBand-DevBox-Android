@@ -107,7 +107,7 @@ class DeviceViewModel(
             )
             
             _deviceInfo.value = info
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Error handled by loading state reset or system logs
         } finally {
             _isLoading.value = false

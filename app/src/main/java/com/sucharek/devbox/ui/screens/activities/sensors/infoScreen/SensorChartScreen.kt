@@ -92,7 +92,7 @@ fun SensorChartScreen(
                     fontWeight = FontWeight.Bold
                 )
 
-                StreamStatusChip(state = subscriptionState, activeSensor = sensorName)
+                StreamStatusChip(state = subscriptionState)
             }
 
             SecondaryTabRow(selectedTabIndex = selectedTab) {

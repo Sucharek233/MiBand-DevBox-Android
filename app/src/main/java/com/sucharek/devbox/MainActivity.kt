@@ -344,8 +344,7 @@ class MainActivity : ComponentActivity() {
                                 }
                                 PingScreen(
                                     viewModel = pingViewModel,
-                                    initialType = pingRoute.initialType,
-                                    onBack = { navController.popBackStack() }
+                                    initialType = pingRoute.initialType
                                 )
                             }
                         }

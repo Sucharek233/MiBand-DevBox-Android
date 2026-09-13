@@ -95,8 +95,7 @@ fun LuaSensorScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (subscriptionState != SubscriptionState.DISCONNECTED) {
                         StreamStatusChip(
-                            state = subscriptionState,
-                            activeSensor = activeSensor?.name ?: "Unknown",
+                            state = subscriptionState
                         )
                     }
 

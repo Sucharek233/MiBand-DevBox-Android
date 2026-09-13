@@ -17,16 +17,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 // DevTools Dark Color Palette
-val DevToolsBg = Color(0xFF242424)
-val DevToolsLineDivider = Color(0xFF383838)
-val DevToolsPromptBlue = Color(0xFF91B4FF)
 val DevToolsDimArrow = Color(0xFF7F7F7F)
 val DevToolsStringVal = Color(0xFFA5D6FF)
 val DevToolsNumberVal = Color(0xFF79C0FF)
 val DevToolsKeyword = Color(0xFFFF7B72)
 val DevToolsKeyName = Color(0xFFD2A8FF)
-val DevToolsErrorBg = Color(0xFF2C1517)
-val DevToolsErrorText = Color(0xFFFF8182)
 
 @Composable
 fun JsonTreeItem(

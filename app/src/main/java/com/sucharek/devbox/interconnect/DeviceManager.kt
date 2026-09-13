@@ -9,8 +9,6 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class DeviceManager(context: Context) {
-    var selectedNode: Node? = null
-
     private val nodeApi: NodeApi = Wearable.getNodeApi(context)
 
     suspend fun getConnectedDevices(): List<Node> {

@@ -23,8 +23,7 @@ import java.util.Locale
 @Composable
 fun PingScreen(
     viewModel: PingViewModel,
-    initialType: String? = null,
-    onBack: () -> Unit
+    initialType: String? = null
 ) {
     val pings by viewModel.pings.collectAsState()
     val isPinging by viewModel.isPinging.collectAsState()

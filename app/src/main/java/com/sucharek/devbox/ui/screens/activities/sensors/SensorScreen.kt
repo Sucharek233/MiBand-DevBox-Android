@@ -30,7 +30,6 @@ fun SensorScreen(
 ) {
     val sensorList by viewModel.sensorList.collectAsState()
     val isDiscovering by viewModel.isDiscovering.collectAsState()
-    val scanProgress by viewModel.scanProgress.collectAsState()
     val activeSensor by viewModel.activeSensor.collectAsState()
     val subscriptionState by viewModel.subscriptionState.collectAsState()
     val isBusy by watchViewModel.isJsBusy.collectAsState()
@@ -77,7 +76,7 @@ fun SensorScreen(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (activeSensor != null) {
-                        StreamStatusChip(state = subscriptionState, activeSensor = activeSensor!!)
+                        StreamStatusChip(state = subscriptionState)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -295,8 +294,7 @@ private fun AvailabilityBadge(status: SensorAvailability) {
 
 @Composable
 internal fun StreamStatusChip(
-    state: SubscriptionState,
-    activeSensor: String
+    state: SubscriptionState
 ) {
     val (color, label) = when (state) {
         SubscriptionState.SUBSCRIBING -> Pair(Color(0xFFFFC107), "Connecting…")

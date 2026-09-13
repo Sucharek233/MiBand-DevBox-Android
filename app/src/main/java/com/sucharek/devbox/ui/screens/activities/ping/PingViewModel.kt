@@ -107,7 +107,7 @@ class PingViewModel(
             }
             
             _isPinging.value = false
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             _isPinging.value = false
         }
     }

@@ -17,8 +17,7 @@ class Messages(
     private val messageApi: MessageApi = Wearable.getMessageApi(context)
 
     private val messageListener = OnMessageReceivedListener { _, bytes ->
-        val received = bytes
-        onMessageReceived(received)
+        onMessageReceived(bytes)
     }
 
     suspend fun sendMessage(message: String) {

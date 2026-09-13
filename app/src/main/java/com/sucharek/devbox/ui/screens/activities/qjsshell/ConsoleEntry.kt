@@ -52,7 +52,7 @@ sealed class ConsoleEntry {
                         entries.add(Output(rawResult = outer))
                     }
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 entries.add(Output(rawResult = payloadString))
             }
             return entries
@@ -71,10 +71,10 @@ sealed class ConsoleEntry {
 
             // 2. Objects or Arrays
             if (trimmed.startsWith("{")) {
-                return try { JSONObject(trimmed) } catch (e: Exception) { trimmed }
+                return try { JSONObject(trimmed) } catch (_: Exception) { trimmed }
             }
             if (trimmed.startsWith("[")) {
-                return try { JSONArray(trimmed) } catch (e: Exception) { trimmed }
+                return try { JSONArray(trimmed) } catch (_: Exception) { trimmed }
             }
 
             // 3. Booleans

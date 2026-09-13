@@ -22,7 +22,7 @@ data class ModuleItem(
 sealed class ModuleResponse {
     data class CompatResult(val results: Map<String, Boolean>) : ModuleResponse()
     data class FuncsResult(val moduleName: String, val functions: Any?) : ModuleResponse()
-    data class Error(val message: String) : ModuleResponse()
+    object Error : ModuleResponse()
 
     companion object {
         fun parse(payloadString: String, pendingFuncsModule: String?): ModuleResponse {
@@ -31,7 +31,7 @@ sealed class ModuleResponse {
                 val state = outer.optString("state", "")
 
                 if (state == MessageStates.ERROR) {
-                    return Error(outer.optString("msg", "Unknown error"))
+                    return Error
                 }
 
                 val resString = outer.optString("res", null)
@@ -70,10 +70,10 @@ sealed class ModuleResponse {
                 } else if (pendingFuncsModule != null) {
                     FuncsResult(pendingFuncsModule, resString)
                 } else {
-                    Error("Unrecognized response structure")
+                    Error
                 }
-            } catch (e: Exception) {
-                Error("Failed to parse: ${e.localizedMessage}")
+            } catch (_: Exception) {
+                Error
             }
         }
     }

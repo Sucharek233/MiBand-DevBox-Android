@@ -51,7 +51,7 @@ class TerminalViewModel(
                     if (exitCode != 0) {
                         appendLine("Command exited with code: $exitCode", LineType.ERROR)
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     appendLine(payload, LineType.OUTPUT)
                 }
             }

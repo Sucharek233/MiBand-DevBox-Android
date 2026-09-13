@@ -31,9 +31,6 @@ class WatchViewModel(
     private val _isWatchAppInstalled = MutableStateFlow<Boolean?>(null)
     val isWatchAppInstalled: StateFlow<Boolean?> = _isWatchAppInstalled.asStateFlow()
 
-    private val _luaServiceActive = MutableStateFlow(false)
-    val luaServiceActive: StateFlow<Boolean> = _luaServiceActive.asStateFlow()
-
     // Device selection and scanning
     private val _discoveredDevices = MutableStateFlow<List<Node>>(emptyList())
     val discoveredDevices: StateFlow<List<Node>> = _discoveredDevices.asStateFlow()
@@ -207,7 +204,7 @@ class WatchViewModel(
             try {
                 val appApi = Apps(context, node)
                 _isWatchAppInstalled.value = appApi.isAppInstalled()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _isWatchAppInstalled.value = false
             }
         }
@@ -231,7 +228,7 @@ class WatchViewModel(
         viewModelScope.launch {
             try {
                 sendStructuredMessage("ping", JSONObject().apply { put("type", type) })
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _systemMessages.emit("Failed to send Ping")
             }
         }
@@ -243,7 +240,6 @@ class WatchViewModel(
                 DataItem.ITEM_CONNECTION -> {
                     if (result == DataSubscribeResult.RESULT_CONNECTION_DISCONNECTED) {
                         _connectionState.value = WatchConnectionState.Disconnected
-                        _luaServiceActive.value = false
                         _systemMessages.emit("SYSTEM: Watch Disconnected")
                     } else if (result == DataSubscribeResult.RESULT_CONNECTION_CONNECTED) {
                         val nodeName = selectedNode?.name ?: "Unknown Device"
@@ -311,12 +307,6 @@ class WatchViewModel(
                 // 3. Dispatch to specific Flows
                 when (type) {
                     "ping" -> {
-                        val pingState = json.optString("state")
-                        if (pingState == MessageStates.DONE) {
-                            _luaServiceActive.value = true
-                        } else if (pingState == MessageStates.TIMEOUT || pingState == MessageStates.ERROR) {
-                            _luaServiceActive.value = false
-                        }
                         _pingMessages.emit(message)
                     }
                     "luashell" -> _luaShellMessages.emit(message)
@@ -339,7 +329,7 @@ class WatchViewModel(
                         _systemMessages.emit("RECV (Unknown Type: $type): $message")
                     }
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _systemMessages.emit("RECV (Raw/Parse Error): $message")
             }
         }
@@ -351,19 +341,8 @@ class WatchViewModel(
             _systemMessages.emit("SENT: $text")
             try {
                 messagesEngine?.sendMessage(text)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _systemMessages.emit("LOCAL ERROR: Failed to dispatch data payload")
-            }
-        }
-    }
-
-    fun sendRawMessage(byteArray: ByteArray) {
-        viewModelScope.launch {
-            _systemMessages.emit("SENT: [Raw Data ${byteArray.size} bytes]")
-            try {
-                messagesEngine?.sendRawMessage(byteArray)
-            } catch (e: Exception) {
-                _systemMessages.emit("LOCAL ERROR: Failed to dispatch raw data payload")
             }
         }
     }
@@ -386,7 +365,7 @@ class WatchViewModel(
                 }
 
                 sendMessage(envelope.toString())
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _systemMessages.emit("LOCAL ERROR: Envelope packaging aborted due to exception")
             }
         }
@@ -568,7 +547,7 @@ class WatchViewModel(
                     raw = rawMessage
                 )
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             SystemLogEntry(
                 message = "Failed to parse log",
                 type = LogType.ERROR,
@@ -585,7 +564,7 @@ class WatchViewModel(
             try {
                 messagesEngine?.removeIncomingMessageListener()
                 subscriptionsEngine?.unsubConnection()
-            } catch (ignored: Exception) {}
+            } catch (_: Exception) {}
         }
     }
 }
