@@ -103,11 +103,6 @@ class WatchViewModel(
     private val _webSocketLogs = MutableSharedFlow<String>(extraBufferCapacity = 64)
     val webSocketLogs = _webSocketLogs.asSharedFlow()
 
-    val webSocketManager = WebSocketServerManager(
-        onMessageReceived = { msg -> sendMessage(msg) },
-        onLog = { log -> viewModelScope.launch { _webSocketLogs.emit(log) } }
-    )
-
     private val _systemLogEntries = MutableStateFlow<List<SystemLogEntry>>(emptyList())
     val systemLogEntries: StateFlow<List<SystemLogEntry>> = _systemLogEntries.asStateFlow()
 
@@ -154,7 +149,7 @@ class WatchViewModel(
         }
         viewModelScope.launch {
             rawIncomingMessages.collect { msg ->
-                webSocketManager.broadcast(msg)
+                // This is now handled by the Service if running
             }
         }
     }

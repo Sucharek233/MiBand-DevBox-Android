@@ -353,7 +353,7 @@ class MainActivity : ComponentActivity() {
                             composable<Screen.WebSocketApi> {
                                 val activity = LocalActivity.current as ComponentActivity
                                 val wsViewModel: WebSocketViewModel = viewModel(viewModelStoreOwner = activity) {
-                                    WebSocketViewModel(watchViewModel)
+                                    WebSocketViewModel(watchViewModel, activity.applicationContext)
                                 }
                                 WebSocketScreen(
                                     viewModel = wsViewModel
