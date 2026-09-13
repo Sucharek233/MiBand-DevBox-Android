@@ -94,6 +94,9 @@ class ModuleCompatibilityViewModel(
     private val _scrollToModule = MutableSharedFlow<Int>(extraBufferCapacity = 1)
     val scrollToModule: SharedFlow<Int> = _scrollToModule.asSharedFlow()
 
+    private val _pulseModule = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val pulseModule: SharedFlow<String> = _pulseModule.asSharedFlow()
+
     private var pendingFuncsModule: String? = null
 
     init {
@@ -161,7 +164,10 @@ class ModuleCompatibilityViewModel(
         val existingIndex = _modules.value.indexOfFirst { it.name == trimmed }
         
         if (existingIndex != -1) {
-            viewModelScope.launch { _scrollToModule.emit(existingIndex) }
+            viewModelScope.launch { 
+                _scrollToModule.emit(existingIndex)
+                _pulseModule.emit(trimmed)
+            }
             return
         }
 
@@ -171,6 +177,7 @@ class ModuleCompatibilityViewModel(
         
         viewModelScope.launch {
             _scrollToModule.emit(newIndex)
+            _pulseModule.emit(trimmed)
         }
         
         testCompatibility(listOf(trimmed))

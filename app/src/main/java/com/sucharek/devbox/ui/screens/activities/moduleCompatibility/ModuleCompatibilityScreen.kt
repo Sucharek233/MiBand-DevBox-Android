@@ -1,6 +1,8 @@
 package com.sucharek.devbox.ui.screens.activities.moduleCompatibility
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -35,12 +37,23 @@ fun ModuleCompatibilityScreen(
     val modules by viewModel.modules.collectAsState()
     val isBusy by watchViewModel.isJsBusy.collectAsState()
     var customInput by remember { mutableStateOf("") }
+    var pulsingModule by remember { mutableStateOf<String?>(null) }
     
     val listState = rememberLazyListState()
 
     LaunchedEffect(Unit) {
         viewModel.scrollToModule.collect { index ->
             listState.animateScrollToItem(index)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.pulseModule.collect { name ->
+            // Delay the pulse slightly so it's visible after/during the scroll
+            kotlinx.coroutines.delay(200L)
+            pulsingModule = name
+            kotlinx.coroutines.delay(1000L) // Hold the peak color
+            pulsingModule = null
         }
     }
 
@@ -105,7 +118,8 @@ fun ModuleCompatibilityScreen(
                             onToggleSelect = { viewModel.toggleSelection(item.name) },
                             onCheckCompat = { viewModel.testCompatibility(listOf(item.name)) },
                             onToggleExpand = { viewModel.fetchFunctions(item.name) },
-                            isBusy = isBusy
+                            isBusy = isBusy,
+                            isPulsing = pulsingModule == item.name
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
                     }
@@ -169,10 +183,17 @@ private fun ModuleCardRow(
     onToggleSelect: () -> Unit,
     onCheckCompat: () -> Unit,
     onToggleExpand: () -> Unit,
-    isBusy: Boolean
+    isBusy: Boolean,
+    isPulsing: Boolean
 ) {
     val isSupported = item.status == CompatStatus.SUPPORTED
     val isUnsupported = item.status == CompatStatus.UNSUPPORTED
+
+    val pulseColor by animateColorAsState(
+        targetValue = if (isPulsing) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
+        animationSpec = if (isPulsing) tween(durationMillis = 300) else tween(durationMillis = 2000),
+        label = "pulse"
+    )
 
     Column(
         modifier = Modifier
@@ -181,6 +202,7 @@ private fun ModuleCardRow(
                 if (item.isExpanded && !isUnsupported) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp) 
                 else Color.Transparent
             )
+            .background(pulseColor)
             .padding(vertical = 4.dp, horizontal = 8.dp)
     ) {
         Row(
