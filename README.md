@@ -1,10 +1,9 @@
 # MiBand DevBox Android
-Android companion app for DevBox (duh)
+Android companion app for DevBox
 
 This app serves as the central control hub for the [MiBand DevBox Lua Service](https://github.com/Sucharek233/MiBand-DevBox-Watchface) and [QuickApp](https://github.com/Sucharek233/MiBand-DevBox-QuickApp).
 
-<img src="images/qjs.png" alt="QJS workspaces" width="220">
-<img src="images/lua.png" alt="Lua workspaces" width="220">
+<img src="images/qjs.png" alt="QJS workspaces" width="220"> <img src="images/lua.png" alt="Lua workspaces" width="220">
 
 ## User Interface
 A modern Jetpack Compose UI with:
