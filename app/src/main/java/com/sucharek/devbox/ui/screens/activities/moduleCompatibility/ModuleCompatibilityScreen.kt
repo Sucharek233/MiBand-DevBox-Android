@@ -33,7 +33,7 @@ fun ModuleCompatibilityScreen(
     modifier: Modifier = Modifier
 ) {
     val modules by viewModel.modules.collectAsState()
-    val isBusy by watchViewModel.isAnyOperationActive.collectAsState()
+    val isBusy by watchViewModel.isJsBusy.collectAsState()
     var customInput by remember { mutableStateOf("") }
     
     val listState = rememberLazyListState()

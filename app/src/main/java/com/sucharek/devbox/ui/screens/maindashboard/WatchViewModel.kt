@@ -115,9 +115,6 @@ class WatchViewModel(
     private val _isJsBusy = MutableStateFlow(false)
     val isJsBusy: StateFlow<Boolean> = _isJsBusy.asStateFlow()
 
-    @Deprecated("Use isLuaBusy or isJsBusy")
-    val isAnyOperationActive: StateFlow<Boolean> = _isLuaBusy.asStateFlow()
-
     private val _lastTimeoutError = MutableStateFlow<String?>(null)
     val lastTimeoutError: StateFlow<String?> = _lastTimeoutError.asStateFlow()
 

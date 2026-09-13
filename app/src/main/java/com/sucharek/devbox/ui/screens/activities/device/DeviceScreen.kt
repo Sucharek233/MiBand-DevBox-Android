@@ -25,7 +25,7 @@ fun DeviceScreen(
 ) {
     val deviceInfo by viewModel.deviceInfo.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    val isBusy by watchViewModel.isAnyOperationActive.collectAsState()
+    val isBusy by watchViewModel.isJsBusy.collectAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
